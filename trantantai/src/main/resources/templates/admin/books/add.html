@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm Sách Mới - BookHaven Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin.css?v=5}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="admin-body">
+<div class="admin-wrapper">
+    <th:block th:replace="~{admin/layout::sidebar}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/layout::topbar}"></th:block>
+
+        <main class="admin-content">
+            <!-- Breadcrumb -->
+            <nav class="admin-breadcrumb">
+                <a href="/admin">Dashboard</a>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                </svg>
+                <a href="/admin/books">Quản lý sách</a>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                </svg>
+                <span>Thêm sách mới</span>
+            </nav>
+
+            <!-- Form Card -->
+            <div class="admin-form-card">
+                <div class="form-header">
+                    <h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                        </svg>
+                        Thêm Sách Mới
+                    </h2>
+                </div>
+                <div class="form-body">
+                    <form th:action="@{/admin/books/add}" th:object="${book}" method="post" class="admin-form">
+                        <div class="form-group">
+                            <label for="title" class="form-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z"/>
+                                </svg>
+                                Tên sách <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="title" th:field="*{title}"
+                                   th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'"
+                                   placeholder="Nhập tên sách" required maxlength="50" autofocus>
+                            <span th:if="${#fields.hasErrors('title')}" th:errors="*{title}" class="error-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="author" class="form-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+                                </svg>
+                                Tác giả <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="author" th:field="*{author}"
+                                   th:classappend="${#fields.hasErrors('author')} ? 'is-invalid'"
+                                   placeholder="Nhập tên tác giả" required maxlength="50">
+                            <span th:if="${#fields.hasErrors('author')}" th:errors="*{author}" class="error-text"></span>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="price" class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M4 10.781c.148 1.667 1.513 2.85 3.591 3.003V15h1.043v-1.216c2.27-.179 3.678-1.438 3.678-3.315 0-1.667-1.104-2.512-3.074-3.003l-.604-.165v-3.34c1.143.146 1.904.857 1.996 1.83h1.724c-.09-1.776-1.458-2.998-3.72-3.137V3h-1.043v1.163C5.312 4.31 4.025 5.474 4.025 7.15c0 1.513.954 2.362 2.77 2.77l.557.152v3.55c-1.284-.14-2.069-.911-2.152-1.84z"/>
+                                    </svg>
+                                    Giá (VNĐ) <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" id="price" th:field="*{price}"
+                                       th:classappend="${#fields.hasErrors('price')} ? 'is-invalid'"
+                                       placeholder="Nhập giá sách" step="1000" min="0">
+                                <span th:if="${#fields.hasErrors('price')}" th:errors="*{price}" class="error-text"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="categoryId" class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M3 2v4.586l7 7L14.586 9l-7-7zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586z"/>
+                                    </svg>
+                                    Danh mục <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="categoryId" th:field="*{categoryId}"
+                                        th:classappend="${#fields.hasErrors('categoryId')} ? 'is-invalid'">
+                                    <option value="">-- Chọn danh mục --</option>
+                                    <option th:each="category : ${categories}"
+                                            th:value="${category.id}"
+                                            th:text="${category.name}">
+                                    </option>
+                                </select>
+                                <span th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}" class="error-text"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="quantity" class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 1 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2M5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1"/>
+                                    </svg>
+                                    Số lượng tồn kho <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" id="quantity" th:field="*{quantity}"
+                                       th:classappend="${#fields.hasErrors('quantity')} ? 'is-invalid'"
+                                       placeholder="Nhập số lượng tồn kho" step="1" min="0">
+                                <span th:if="${#fields.hasErrors('quantity')}" th:errors="*{quantity}" class="error-text"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-admin btn-admin-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                                </svg>
+                                Thêm Sách
+                            </button>
+                            <a href="/admin/books" class="btn-admin btn-admin-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                                </svg>
+                                Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/admin.js}"></script>
+
+<style>
+/* Additional form styles */
+.admin-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xl);
+    font-size: 0.875rem;
+}
+
+.admin-breadcrumb a {
+    color: var(--admin-text-tertiary);
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+.admin-breadcrumb a:hover {
+    color: var(--admin-accent);
+}
+
+.admin-breadcrumb svg {
+    color: var(--admin-text-muted);
+}
+
+.admin-breadcrumb span {
+    color: var(--admin-text);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
+}
+
+.error-text {
+    display: block;
+    margin-top: var(--space-xs);
+    font-size: 0.8rem;
+    color: var(--admin-danger);
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+    border-color: var(--admin-danger);
+}
+
+.form-control.is-invalid:focus,
+.form-select.is-invalid:focus {
+    border-color: var(--admin-danger);
+    box-shadow: 0 0 0 3px var(--admin-danger-bg);
+}
+
+@media (max-width: 576px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</body>
+</html>
