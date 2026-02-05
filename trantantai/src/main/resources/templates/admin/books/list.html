@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Sách - BookHaven Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin.css?v=5}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="admin-body">
+<div class="admin-wrapper">
+    <th:block th:replace="~{admin/layout::sidebar}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/layout::topbar}"></th:block>
+
+        <main class="admin-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-header-content">
+                    <h1 class="page-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783"/>
+                        </svg>
+                        Quản Lý Sách
+                    </h1>
+                    <p class="page-subtitle">Quản lý tất cả sách trong hệ thống</p>
+                </div>
+                <div class="page-actions">
+                    <a href="/admin/books/add" class="btn-admin btn-admin-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                        </svg>
+                        Thêm sách mới
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats Summary -->
+            <div class="mini-stats">
+                <div class="mini-stat">
+                    <span class="mini-stat-value" th:text="${totalBooks ?: books.size()}">0</span>
+                    <span class="mini-stat-label">Tổng số sách</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="mini-stat-value" th:text="${totalCategories ?: 0}">0</span>
+                    <span class="mini-stat-label">Danh mục</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="mini-stat-value">12</span>
+                    <span class="mini-stat-label">Sách mới tuần này</span>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="admin-table-card">
+                <div class="table-header">
+                    <div class="table-title">
+                        <h2>Danh sách sách</h2>
+                        <span class="table-count" th:text="'(' + ${books.size()} + ' sách)'"></span>
+                    </div>
+                    <div class="table-actions">
+                        <div class="table-search">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                            </svg>
+                            <input type="text" placeholder="Tìm kiếm sách..." id="searchInput">
+                        </div>
+                        <select class="table-filter" id="categoryFilter">
+                            <option value="">Tất cả danh mục</option>
+                            <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="admin-table" id="booksTable">
+                        <thead>
+                        <tr>
+                            <th style="width: 60px;">ID</th>
+                            <th>Tên sách</th>
+                            <th>Tác giả</th>
+                            <th>Danh mục</th>
+                            <th>Giá</th>
+                            <th>Số lượng</th>
+                            <th style="width: 150px;">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="book : ${books}" th:data-category="${book.category?.id}">
+                            <td>
+                                <span class="table-id" th:text="${book.id}">#1</span>
+                            </td>
+                            <td>
+                                <div class="book-cell">
+                                    <div class="book-thumb">
+                                        <span th:text="${#strings.substring(book.title, 0, 2)}">BK</span>
+                                    </div>
+                                    <div class="book-detail">
+                                        <span class="book-name" th:text="${book.title}">Tên sách</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="author-name" th:text="${book.author}">Tác giả</span>
+                            </td>
+                            <td>
+                                <span class="category-tag" th:text="${book.category?.name ?: 'Chưa phân loại'}">Danh mục</span>
+                            </td>
+                            <td>
+                                <span class="price-value" th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">100.000đ</span>
+                            </td>
+                            <td>
+                                <span th:text="${book.quantity}">0</span>
+                                <span th:if="${book.quantity == 0}" class="stock-badge stock-out">Hết hàng</span>
+                                <span th:if="${book.quantity > 0 and book.quantity <= 5}" class="stock-badge stock-low">Sắp hết</span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a th:href="@{/admin/books/edit/{id}(id=${book.id})}" class="btn-admin btn-admin-warning btn-admin-sm" title="Sửa">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293z"/>
+                                        </svg>
+                                    </a>
+                                    <a th:href="@{/admin/books/delete/{id}(id=${book.id})}"
+                                       class="btn-admin btn-admin-danger btn-admin-sm delete-book-btn"
+                                       title="Xóa"
+                                       th:data-book-title="${book.title}"
+                                       th:data-book-author="${book.author}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div class="table-empty" th:if="${books.empty}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z"/>
+                    </svg>
+                    <h3>Chưa có sách nào</h3>
+                    <p>Bắt đầu thêm sách vào hệ thống</p>
+                    <a href="/admin/books/add" class="btn-admin btn-admin-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                        </svg>
+                        Thêm sách mới
+                    </a>
+                </div>
+
+                <!-- Pagination -->
+                <div class="table-pagination" th:if="${totalPages != null and totalPages > 0}">
+                    <div class="pagination-info">
+                        Hiển thị <span th:text="${books.size()}">10</span> / <span th:text="${totalBooks ?: books.size()}">100</span> sách
+                    </div>
+                    <nav class="pagination-nav">
+                        <ul class="pagination">
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/books(pageNo=${currentPage - 1})}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+                                    </svg>
+                                </a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages)}" th:classappend="${currentPage == i} ? 'active'">
+                                <a class="page-link" th:href="@{/admin/books(pageNo=${i})}" th:text="${i + 1}">1</a>
+                            </li>
+                            <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/books(pageNo=${currentPage + 1})}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                    </svg>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Delete Confirmation Modal -->
+<div class="delete-modal-overlay" id="deleteModal" style="display: none;">
+    <div class="delete-modal">
+        <div class="delete-modal-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z"/>
+            </svg>
+        </div>
+        <h3 class="delete-modal-title">Xác nhận xóa sách</h3>
+        <p class="delete-modal-message" id="modalMessage">Bạn có chắc muốn xóa sách này?</p>
+        <div class="delete-modal-book-info" id="bookInfo">
+            <div class="book-preview">
+                <span class="book-preview-title" id="previewTitle"></span>
+                <span class="book-preview-author" id="previewAuthor"></span>
+            </div>
+        </div>
+        <div class="delete-modal-actions">
+            <button type="button" class="btn-modal btn-modal-cancel" id="cancelDelete">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                </svg>
+                Hủy bỏ
+            </button>
+            <button type="button" class="btn-modal btn-modal-delete danger" id="confirmDelete">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                </svg>
+                Xóa sách
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/admin.js}"></script>
+<script>
+    // Table Search (specific to this page)
+    document.getElementById('searchInput')?.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#booksTable tbody tr');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
+
+    // Category Filter (specific to this page)
+    document.getElementById('categoryFilter')?.addEventListener('change', function(e) {
+        const categoryId = e.target.value;
+        const rows = document.querySelectorAll('#booksTable tbody tr');
+
+        rows.forEach(row => {
+            if (!categoryId || row.dataset.category === categoryId) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Delete Modal functionality
+    const deleteModal = document.getElementById('deleteModal');
+    const modalMessage = document.getElementById('modalMessage');
+    const previewTitle = document.getElementById('previewTitle');
+    const previewAuthor = document.getElementById('previewAuthor');
+    const cancelBtn = document.getElementById('cancelDelete');
+    const confirmBtn = document.getElementById('confirmDelete');
+    let deleteHref = '';
+
+    function openDeleteModal(bookTitle, bookAuthor, href) {
+        deleteHref = href;
+        modalMessage.innerHTML = `Bạn có chắc muốn xóa sách này không?`;
+        previewTitle.textContent = bookTitle;
+        previewAuthor.textContent = `bởi ${bookAuthor}`;
+
+        deleteModal.style.display = 'flex';
+        // Force reflow before adding active class for animation
+        deleteModal.offsetHeight;
+        deleteModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDeleteModal() {
+        deleteModal.classList.remove('active');
+        document.body.style.overflow = '';
+        // Wait for animation to finish before hiding
+        setTimeout(() => {
+            deleteModal.style.display = 'none';
+        }, 300);
+        deleteHref = '';
+    }
+
+    // Event Listeners
+    document.querySelectorAll('.delete-book-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const bookTitle = this.dataset.bookTitle;
+            const bookAuthor = this.dataset.bookAuthor;
+            const href = this.getAttribute('href');
+            openDeleteModal(bookTitle, bookAuthor, href);
+        });
+    });
+
+    cancelBtn.addEventListener('click', closeDeleteModal);
+
+    confirmBtn.addEventListener('click', function() {
+        if (deleteHref) {
+            this.innerHTML = '<span class="spinner"></span> Đang xóa...';
+            this.disabled = true;
+            window.location.href = deleteHref;
+        }
+    });
+
+    deleteModal.addEventListener('click', function(e) {
+        if (e.target === deleteModal) {
+            closeDeleteModal();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && deleteModal.classList.contains('active')) {
+            closeDeleteModal();
+        }
+    });
+</script>
+
+<style>
+/* Additional styles for books page */
+.page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--space-xl);
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin: 0 0 var(--space-xs);
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--admin-text);
+}
+
+.page-title svg {
+    color: var(--admin-accent);
+}
+
+.page-subtitle {
+    margin: 0;
+    color: var(--admin-text-tertiary);
+    font-size: 0.9rem;
+}
+
+/* Mini Stats */
+.mini-stats {
+    display: flex;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.mini-stat {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-lg) var(--space-xl);
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-md);
+}
+
+.mini-stat-value {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--admin-accent);
+}
+
+.mini-stat-label {
+    font-size: 0.8rem;
+    color: var(--admin-text-tertiary);
+}
+
+/* Table Enhancements */
+.table-count {
+    font-size: 0.875rem;
+    color: var(--admin-text-tertiary);
+    margin-left: var(--space-sm);
+}
+
+.table-search {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--admin-surface-hover);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-md);
+}
+
+.table-search input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--admin-text);
+    font-size: 0.875rem;
+    width: 200px;
+}
+
+.table-search input::placeholder {
+    color: var(--admin-text-tertiary);
+}
+
+.table-search svg {
+    color: var(--admin-text-tertiary);
+}
+
+.table-filter {
+    padding: var(--space-sm) var(--space-md);
+    background: var(--admin-surface-hover);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-md);
+    color: var(--admin-text);
+    font-size: 0.875rem;
+    outline: none;
+}
+
+.table-filter option {
+    background: var(--admin-surface);
+}
+
+/* Table Cells */
+.table-id {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--admin-text-tertiary);
+}
+
+.book-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.book-thumb {
+    width: 40px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--admin-accent-dark), var(--admin-accent));
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--admin-bg);
+    flex-shrink: 0;
+}
+
+.book-name {
+    font-weight: 500;
+    color: var(--admin-text);
+}
+
+.author-name {
+    color: var(--admin-text-secondary);
+}
+
+.category-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: var(--admin-accent-muted);
+    color: var(--admin-accent);
+    border-radius: var(--radius-full);
+}
+
+.price-value {
+    font-weight: 600;
+    color: var(--admin-success);
+}
+
+.stock-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    margin-left: var(--space-xs);
+}
+
+.stock-out {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.stock-low {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.action-buttons {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+/* Table Empty */
+.table-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-3xl);
+    text-align: center;
+    color: var(--admin-text-tertiary);
+}
+
+.table-empty svg {
+    margin-bottom: var(--space-lg);
+    opacity: 0.5;
+}
+
+.table-empty h3 {
+    margin: 0 0 var(--space-sm);
+    color: var(--admin-text);
+}
+
+.table-empty p {
+    margin: 0 0 var(--space-lg);
+}
+
+/* Pagination */
+.table-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg) var(--space-xl);
+    border-top: 1px solid var(--admin-border);
+}
+
+.pagination-info {
+    font-size: 0.875rem;
+    color: var(--admin-text-tertiary);
+}
+
+.pagination {
+    display: flex;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.page-item .page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 var(--space-md);
+    background: var(--admin-surface-hover);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-sm);
+    color: var(--admin-text-secondary);
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+.page-item .page-link:hover {
+    background: var(--admin-surface-elevated);
+    color: var(--admin-text);
+}
+
+.page-item.active .page-link {
+    background: var(--admin-accent);
+    border-color: var(--admin-accent);
+    color: var(--admin-bg);
+}
+
+.page-item.disabled .page-link {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        gap: var(--space-lg);
+    }
+
+    .mini-stats {
+        flex-wrap: wrap;
+    }
+
+    .mini-stat {
+        flex: 1;
+        min-width: 140px;
+    }
+
+    .table-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .table-search,
+    .table-filter {
+        width: 100%;
+    }
+
+    .table-search input {
+        width: 100%;
+    }
+}
+
+/* ==========================================
+   DELETE CONFIRMATION MODAL
+   ========================================== */
+.delete-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: var(--space-lg);
+}
+
+.delete-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.delete-modal {
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
+    padding: var(--space-2xl);
+    max-width: 420px;
+    width: 100%;
+    box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.delete-modal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ef4444 0%, #f97316 50%, #ef4444 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { background-position: 200% 0; }
+    50% { background-position: 0 0; }
+}
+
+.delete-modal-overlay.active .delete-modal {
+    transform: scale(1) translateY(0);
+}
+
+/* Modal Icon */
+.delete-modal-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto var(--space-lg);
+    background: linear-gradient(145deg, #fee2e2, #fecaca);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #dc2626;
+    box-shadow:
+        0 10px 30px rgba(220, 38, 38, 0.2),
+        inset 0 -3px 0 rgba(0, 0, 0, 0.05);
+    animation: iconPulse 2s ease-in-out infinite;
+    position: relative;
+}
+
+.delete-modal-icon::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px dashed #f87171;
+    animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes iconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Modal Title */
+.delete-modal-title {
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--admin-text);
+    margin: 0 0 var(--space-sm);
+    letter-spacing: -0.02em;
+}
+
+/* Modal Message */
+.delete-modal-message {
+    color: var(--admin-text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0 0 var(--space-lg);
+}
+
+/* Book Info Preview */
+.delete-modal-book-info {
+    margin-bottom: var(--space-xl);
+}
+
+.book-preview {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-lg);
+    background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-md);
+}
+
+.book-preview-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--admin-text);
+}
+
+.book-preview-author {
+    font-size: 0.875rem;
+    color: var(--admin-text-tertiary);
+    font-style: italic;
+}
+
+/* Modal Actions */
+.delete-modal-actions {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+}
+
+.btn-modal {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-modal::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.btn-modal-cancel {
+    background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+    color: var(--admin-text-secondary);
+    box-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.btn-modal-cancel:hover {
+    background: linear-gradient(145deg, #e2e8f0, #cbd5e1);
+    color: var(--admin-text);
+    transform: translateY(-1px);
+}
+
+.btn-modal-delete.danger {
+    background: linear-gradient(145deg, #ef4444, #dc2626);
+    color: white;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-modal-delete.danger:hover {
+    background: linear-gradient(145deg, #dc2626, #b91c1c);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.btn-modal:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.btn-modal:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Loading Spinner */
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+    .delete-modal {
+        padding: var(--space-xl);
+        margin: var(--space-md);
+    }
+
+    .delete-modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .delete-modal-icon {
+        width: 64px;
+        height: 64px;
+    }
+
+    .delete-modal-icon svg {
+        width: 24px;
+        height: 24px;
+    }
+}
+</style>
+</body>
+</html>
