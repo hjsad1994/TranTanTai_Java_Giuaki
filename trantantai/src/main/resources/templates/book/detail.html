@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${book.title} + ' - BookHaven'">Chi Tiết Sách - BookHaven</title>
+    <th:block th:replace="~{layout::link-css}"></th:block>
+    <th:block th:replace="~{layout::custom-css}"></th:block>
+</head>
+<body class="d-flex flex-column min-vh-100">
+<th:block th:replace="~{layout::header}"></th:block>
+
+<main class="flex-grow-1">
+    <div class="container animate-fade-in">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Trang Chủ</a></li>
+                <li class="breadcrumb-item"><a href="/books">Sách</a></li>
+                <li class="breadcrumb-item active" th:text="${book.title}">Tên sách</li>
+            </ol>
+        </nav>
+
+        <!-- Book Detail Section -->
+        <div class="book-detail-container">
+            <div class="row g-5">
+                <!-- Book Cover -->
+                <div class="col-lg-5">
+                    <div class="book-cover-wrapper">
+                        <div class="book-cover-large">
+                            <div class="book-spine"></div>
+                            <div class="book-front">
+                                <div class="book-cover-content">
+                                    <span class="book-cover-category" th:text="${book.category != null ? book.category.name : 'Sách'}">Category</span>
+                                    <h2 class="book-cover-title" th:text="${book.title}">Book Title</h2>
+                                    <p class="book-cover-author" th:text="${book.author}">Author</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Book Info -->
+                <div class="col-lg-7">
+                    <div class="book-info">
+                        <span class="book-detail-category" th:text="${book.category != null ? book.category.name : 'Chưa phân loại'}">Category</span>
+                        <h1 class="book-detail-title" th:text="${book.title}">Tên Sách</h1>
+                        <p class="book-detail-author">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                            </svg>
+                            <span th:text="${book.author}">Tác Giả</span>
+                        </p>
+
+                        <div class="book-detail-price-box">
+                            <span class="price-label">Giá bán</span>
+                            <span class="price-value">
+                                <span th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')}">100,000</span>đ
+                            </span>
+                        </div>
+
+                        <div class="book-detail-description">
+                            <h3>Mô tả sách</h3>
+                            <p>Đây là một cuốn sách tuyệt vời thuộc thể loại
+                                <strong th:text="${book.category != null ? book.category.name : 'đa dạng'}">category</strong>.
+                                Được viết bởi tác giả <strong th:text="${book.author}">author</strong>,
+                                cuốn sách mang đến cho độc giả những trải nghiệm đọc sách tuyệt vời và kiến thức bổ ích.
+                            </p>
+                        </div>
+
+                        <div class="book-detail-meta">
+                            <div class="meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z"/>
+                                </svg>
+                                <span>Sách giấy</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+                                </svg>
+                                <span>Giao hàng nhanh</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 1.854 7.146a.5.5 0 1 0-.708.708l3.5 3.5a.5.5 0 0 0 .708 0zm-4.208 7-.896-.897.707-.707.543.543 6.646-6.647a.5.5 0 0 1 .708.708l-7 7a.5.5 0 0 1-.708 0"/>
+                                </svg>
+                                <span>Chính hãng 100%</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M1 2.5A2.5 2.5 0 0 1 3.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 1 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 0 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 0 1 1-1h8zM5 12.25v3.25a.25.25 0 0 0 .4.2l1.45-1.087a.25.25 0 0 1 .3 0L8.6 15.7a.25.25 0 0 0 .4-.2v-3.25a.25.25 0 0 0-.25-.25h-3.5a.25.25 0 0 0-.25.25z"/>
+                                </svg>
+                                <span th:if="${book.quantity > 0}">
+                                    <span class="stock-status stock-in">Còn hàng</span>
+                                    <span class="ms-2">(<span th:text="${book.quantity}">0</span> cuốn)</span>
+                                </span>
+                                <span th:if="${book.quantity == 0}" class="stock-status stock-out">Hết hàng</span>
+                            </div>
+                        </div>
+
+                        <div class="book-detail-actions">
+                            <form sec:authorize="hasRole('USER')" th:action="@{/books/add-to-cart}" method="post" class="d-inline add-to-cart-form">
+                                <input type="hidden" name="id" th:value="${book.id}">
+                                <input type="hidden" name="name" th:value="${book.title}">
+                                <input type="hidden" name="price" th:value="${book.price}">
+                                <button type="submit" class="btn btn-primary btn-lg add-to-cart-btn"
+                                        th:disabled="${book.quantity == 0}"
+                                        th:classappend="${book.quantity == 0} ? 'disabled'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                                        <path d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9z"/>
+                                        <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zm3.915 10L3.102 4h10.796l-1.313 7zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                                    </svg>
+                                    Thêm Vào Giỏ Hàng
+                                </button>
+                            </form>
+                            <a sec:authorize="isAnonymous()" href="/login" class="btn btn-primary btn-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"/>
+                                    <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
+                                </svg>
+                                Đăng Nhập Để Mua
+                            </a>
+                            <a href="/" class="btn btn-outline-secondary btn-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+                                </svg>
+                                Quay Lại
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Books Section -->
+        <section class="related-books-section" th:if="${!relatedBooks.isEmpty()}">
+            <h2 class="section-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                    <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z"/>
+                </svg>
+                Sách Cùng Thể Loại
+            </h2>
+            <div class="row g-4">
+                <div class="col-6 col-md-3" th:each="relatedBook : ${relatedBooks}">
+                    <a th:href="@{/book/{id}(id=${relatedBook.id})}" class="book-card-link">
+                        <div class="book-card">
+                            <div class="book-card-cover">
+                                <div class="book-card-spine"></div>
+                                <div class="book-card-front">
+                                    <span class="book-card-category" th:text="${relatedBook.category != null ? relatedBook.category.name : 'Sách'}">Category</span>
+                                    <h4 class="book-card-title" th:text="${relatedBook.title}">Title</h4>
+                                    <p class="book-card-author" th:text="${relatedBook.author}">Author</p>
+                                </div>
+                            </div>
+                            <div class="book-card-info">
+                                <h5 class="book-card-name" th:text="${relatedBook.title}">Book Title</h5>
+                                <p class="book-card-writer" th:text="${relatedBook.author}">Author</p>
+                                <span class="book-card-price">
+                                    <span th:text="${#numbers.formatDecimal(relatedBook.price, 0, 'COMMA', 0, 'POINT')}">100,000</span>đ
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<th:block th:replace="~{layout::footer}"></th:block>
+
+<script>
+// Add to cart AJAX
+document.querySelectorAll('.add-to-cart-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const btn = this.querySelector('.add-to-cart-btn');
+        const originalHtml = btn.innerHTML;
+
+        // Show loading state
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang thêm...';
+
+        const formData = new FormData(this);
+
+        fetch(this.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update cart badge
+                const cartBadge = document.querySelector('.cart-badge');
+                if (cartBadge) {
+                    cartBadge.textContent = data.cartCount;
+                    cartBadge.classList.add('cart-badge-animate');
+                    setTimeout(() => cartBadge.classList.remove('cart-badge-animate'), 300);
+                }
+
+                // Update cart total
+                const cartTotal = document.querySelector('.cart-total');
+                if (cartTotal) {
+                    const formattedTotal = new Intl.NumberFormat('vi-VN').format(data.cartTotal) + 'đ';
+                    cartTotal.textContent = formattedTotal;
+                }
+
+                // Show success feedback
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg>Đã thêm vào giỏ!';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-success');
+
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-primary');
+                    btn.disabled = false;
+                }, 2000);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            alert('Có lỗi xảy ra. Vui lòng thử lại!');
+        });
+    });
+});
+</script>
+
+<style>
+.cart-badge-animate {
+    animation: cartPulse 0.3s ease;
+}
+
+@keyframes cartPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+}
+
+/* Stock status badges */
+.stock-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+}
+
+.stock-in {
+    background-color: #d1fae5;
+    color: #059669;
+}
+
+.stock-out {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+/* Disabled button styles */
+.btn.disabled,
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: all;
+}
+
+.btn:disabled:hover {
+    opacity: 0.5;
+}
+</style>
+</body>
+</html>
