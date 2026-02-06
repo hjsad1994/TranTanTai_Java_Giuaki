@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo & Thống kê - BookHaven Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin.css?v=5}">
+    <link rel="stylesheet" th:href="@{/css/admin-reports.css?v=1}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body class="admin-body">
+<div class="admin-wrapper">
+    <th:block th:replace="~{admin/layout::sidebar}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/layout::topbar}"></th:block>
+
+        <main class="admin-content">
+            <!-- Page Header with Export Actions -->
+            <div class="reports-header">
+                <div class="reports-header-content">
+                    <div class="reports-title-section">
+                        <h1 class="reports-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M4 11H2v3h2zm5-4H7v7h2zm5-5h-2v12h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"/>
+                            </svg>
+                            Báo cáo & Thống kê
+                        </h1>
+                        <p class="reports-subtitle">Tổng hợp dữ liệu kinh doanh và phân tích hiệu suất</p>
+                    </div>
+                    <div class="reports-actions">
+                        <button class="btn-export btn-export-excel" onclick="seedMockData()" style="background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                                <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5"/>
+                            </svg>
+                            Tạo dữ liệu mẫu
+                        </button>
+                        <button class="btn-export btn-export-excel" onclick="exportToExcel()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+                                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                            </svg>
+                            Xuất Excel
+                        </button>
+                        <button class="btn-export btn-export-pdf" onclick="exportToPDF()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                                <path d="M4.603 14.087a.8.8 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.7 7.7 0 0 1 1.482-.645 20 20 0 0 0 1.062-2.227 7.3 7.3 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a11 11 0 0 0 .98 1.686 5.8 5.8 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.86.86 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.7 5.7 0 0 1-.911-.95 11.7 11.7 0 0 0-1.997.406 11.3 11.3 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.8.8 0 0 1-.58.029z"/>
+                            </svg>
+                            Xuất PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Date Range Filter -->
+                <div class="reports-filter">
+                    <div class="filter-group">
+                        <label class="filter-label">Khoảng thời gian</label>
+                        <div class="filter-buttons">
+                            <button class="filter-btn" data-range="today">Hôm nay</button>
+                            <button class="filter-btn" data-range="week">7 ngày</button>
+                            <button class="filter-btn active" data-range="month">30 ngày</button>
+                            <button class="filter-btn" data-range="quarter">Quý này</button>
+                            <button class="filter-btn" data-range="year">Năm nay</button>
+                            <button class="filter-btn" data-range="custom">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                                </svg>
+                                Tùy chỉnh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="filter-custom" id="customDateRange" style="display: none;">
+                        <div class="date-input-group">
+                            <label>Từ ngày</label>
+                            <input type="date" id="startDate" class="date-input">
+                        </div>
+                        <div class="date-input-group">
+                            <label>Đến ngày</label>
+                            <input type="date" id="endDate" class="date-input">
+                        </div>
+                        <button class="btn-apply-filter">Áp dụng</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Overview Cards -->
+            <div class="revenue-overview">
+                <div class="revenue-card revenue-card-total">
+                    <div class="revenue-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M4 10.781c.148 1.667 1.513 2.85 3.591 3.003V15h1.043v-1.216c2.27-.179 3.678-1.438 3.678-3.3 0-1.59-.947-2.51-2.956-3.028l-.722-.187V3.467c1.122.11 1.879.714 2.07 1.616h1.47c-.166-1.6-1.54-2.748-3.54-2.875V1H7.591v1.233c-1.939.23-3.27 1.472-3.27 3.156 0 1.454.966 2.483 2.661 2.917l.61.162v4.031c-1.149-.17-1.94-.8-2.131-1.718zm3.391-3.836c-1.043-.263-1.6-.825-1.6-1.616 0-.944.704-1.641 1.8-1.828v3.495l-.2-.05zm1.591 1.872c1.287.323 1.852.859 1.852 1.769 0 1.097-.826 1.828-2.2 1.939V8.73z"/>
+                        </svg>
+                    </div>
+                    <div class="revenue-card-content">
+                        <span class="revenue-label">Tổng doanh thu</span>
+                        <span class="revenue-value" th:text="${totalRevenue != null ? #numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">125,450,000đ</span>
+                        <div class="revenue-change revenue-up">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5"/>
+                            </svg>
+                            <span>+23.5% so với kỳ trước</span>
+                        </div>
+                    </div>
+                    <div class="revenue-chart-mini">
+                        <canvas id="revenueSparkline"></canvas>
+                    </div>
+                </div>
+
+                <div class="revenue-card revenue-card-orders">
+                    <div class="revenue-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M0 2.5A.5.5 0 0 1 .5 2H2a.5.5 0 0 1 .485.379L2.89 4H14.5a.5.5 0 0 1 .485.621l-1.5 6A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.485-.379L1.61 3H.5a.5.5 0 0 1-.5-.5M3.14 5l1.25 5h8.22l1.25-5zM5 13a1 1 0 1 0 0 2 1 1 0 0 0 0-2m-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0m9-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2m-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0"/>
+                        </svg>
+                    </div>
+                    <div class="revenue-card-content">
+                        <span class="revenue-label">Tổng đơn hàng</span>
+                        <span class="revenue-value" th:text="${totalOrders != null ? totalOrders : 0}">1,247</span>
+                        <div class="revenue-change revenue-up">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5"/>
+                            </svg>
+                            <span>+18.2% so với kỳ trước</span>
+                        </div>
+                    </div>
+                    <div class="revenue-chart-mini">
+                        <canvas id="ordersSparkline"></canvas>
+                    </div>
+                </div>
+
+                <div class="revenue-card revenue-card-avg">
+                    <div class="revenue-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M5.5 9.511c.076.954.83 1.697 2.182 1.785V12h.6v-.709c1.4-.098 2.218-.846 2.218-1.932 0-.987-.626-1.496-1.745-1.76l-.473-.112V5.57c.6.068.982.396 1.074.85h1.052c-.076-.919-.864-1.638-2.126-1.716V4h-.6v.719c-1.195.117-2.01.836-2.01 1.853 0 .9.606 1.472 1.613 1.707l.397.098v2.034c-.615-.093-1.022-.43-1.114-.9zm2.177-2.166c-.59-.137-.91-.416-.91-.836 0-.47.345-.822.915-.925v1.76h-.005zm.692 1.193c.717.166 1.048.435 1.048.91 0 .542-.412.914-1.135.982V8.518z"/>
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                            <path d="M8 13.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11m0 .5A6 6 0 1 0 8 2a6 6 0 0 0 0 12"/>
+                        </svg>
+                    </div>
+                    <div class="revenue-card-content">
+                        <span class="revenue-label">Giá trị đơn TB</span>
+                        <span class="revenue-value" th:text="${avgOrderValue != null ? #numbers.formatDecimal(avgOrderValue, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">245,000đ</span>
+                        <div class="revenue-change revenue-neutral">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 4"/>
+                            </svg>
+                            <span>Ổn định</span>
+                        </div>
+                    </div>
+                    <div class="revenue-chart-mini">
+                        <canvas id="avgSparkline"></canvas>
+                    </div>
+                </div>
+
+                <div class="revenue-card revenue-card-customers">
+                    <div class="revenue-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816M4.92 10A5.5 5.5 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0m3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4"/>
+                        </svg>
+                    </div>
+                    <div class="revenue-card-content">
+                        <span class="revenue-label">Khách hàng mới</span>
+                        <span class="revenue-value" th:text="${newCustomers != null ? newCustomers : 0}">156</span>
+                        <div class="revenue-change revenue-up">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5"/>
+                            </svg>
+                            <span>+12.8% so với kỳ trước</span>
+                        </div>
+                    </div>
+                    <div class="revenue-chart-mini">
+                        <canvas id="customersSparkline"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Charts Grid -->
+            <div class="charts-grid">
+                <!-- Revenue Chart -->
+                <div class="chart-card chart-card-large">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>Biểu đồ doanh thu</h3>
+                            <span class="chart-subtitle">Theo thời gian</span>
+                        </div>
+                        <div class="chart-options">
+                            <button class="chart-option active" data-chart-type="line">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M0 0h1v15h15v1H0zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07"/>
+                                </svg>
+                            </button>
+                            <button class="chart-option" data-chart-type="bar">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M4 11H2v3h2zm5-4H7v7h2zm5-5h-2v12h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Orders by Status -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>Trạng thái đơn hàng</h3>
+                            <span class="chart-subtitle">Phân bổ theo trạng thái</span>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="orderStatusChart"></canvas>
+                    </div>
+                    <div class="chart-legend" id="orderStatusLegend">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secondary Charts Grid -->
+            <div class="charts-grid charts-grid-3">
+                <!-- Top Selling Books -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>Sách bán chạy</h3>
+                            <span class="chart-subtitle">Top 10 sản phẩm</span>
+                        </div>
+                        <a href="/admin/books" class="chart-link">Xem tất cả</a>
+                    </div>
+                    <div class="chart-body chart-body-list">
+                        <div class="top-products-list">
+                            <div class="top-product-item" th:each="book, iter : ${topSellingBooks}" th:if="${iter.index < 10}">
+                                <span class="product-rank" th:text="${iter.index + 1}">1</span>
+                                <div class="product-cover">
+                                    <span th:text="${#strings.substring(book.title, 0, 2)}">BK</span>
+                                </div>
+                                <div class="product-info">
+                                    <h4 th:text="${book.title}">Clean Code</h4>
+                                    <span th:text="${book.author}">Robert C. Martin</span>
+                                </div>
+                                <div class="product-stats">
+                                    <span class="product-sold" th:text="${book.soldCount + ' đã bán'}">128 đã bán</span>
+                                    <span class="product-revenue" th:text="${#numbers.formatDecimal(book.revenue, 0, 'COMMA', 0, 'POINT') + 'đ'}">12,800,000đ</span>
+                                </div>
+                            </div>
+                            <!-- Sample data for UI -->
+                            <div class="top-product-item" th:if="${topSellingBooks == null or topSellingBooks.empty}">
+                                <span class="product-rank">1</span>
+                                <div class="product-cover"><span>CC</span></div>
+                                <div class="product-info">
+                                    <h4>Clean Code</h4>
+                                    <span>Robert C. Martin</span>
+                                </div>
+                                <div class="product-stats">
+                                    <span class="product-sold">128 đã bán</span>
+                                    <span class="product-revenue">12,800,000đ</span>
+                                </div>
+                            </div>
+                            <div class="top-product-item" th:if="${topSellingBooks == null or topSellingBooks.empty}">
+                                <span class="product-rank">2</span>
+                                <div class="product-cover"><span>DP</span></div>
+                                <div class="product-info">
+                                    <h4>Design Patterns</h4>
+                                    <span>Gang of Four</span>
+                                </div>
+                                <div class="product-stats">
+                                    <span class="product-sold">95 đã bán</span>
+                                    <span class="product-revenue">9,500,000đ</span>
+                                </div>
+                            </div>
+                            <div class="top-product-item" th:if="${topSellingBooks == null or topSellingBooks.empty}">
+                                <span class="product-rank">3</span>
+                                <div class="product-cover"><span>RE</span></div>
+                                <div class="product-info">
+                                    <h4>Refactoring</h4>
+                                    <span>Martin Fowler</span>
+                                </div>
+                                <div class="product-stats">
+                                    <span class="product-sold">87 đã bán</span>
+                                    <span class="product-revenue">8,700,000đ</span>
+                                </div>
+                            </div>
+                            <div class="top-product-item" th:if="${topSellingBooks == null or topSellingBooks.empty}">
+                                <span class="product-rank">4</span>
+                                <div class="product-cover"><span>TDD</span></div>
+                                <div class="product-info">
+                                    <h4>Test Driven Development</h4>
+                                    <span>Kent Beck</span>
+                                </div>
+                                <div class="product-stats">
+                                    <span class="product-sold">76 đã bán</span>
+                                    <span class="product-revenue">7,600,000đ</span>
+                                </div>
+                            </div>
+                            <div class="top-product-item" th:if="${topSellingBooks == null or topSellingBooks.empty}">
+                                <span class="product-rank">5</span>
+                                <div class="product-cover"><span>DDD</span></div>
+                                <div class="product-info">
+                                    <h4>Domain Driven Design</h4>
+                                    <span>Eric Evans</span>
+                                </div>
+                                <div class="product-stats">
+                                    <span class="product-sold">65 đã bán</span>
+                                    <span class="product-revenue">6,500,000đ</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Performance -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>Doanh thu theo danh mục</h3>
+                            <span class="chart-subtitle">Phân bổ theo thể loại</span>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Sales Trend -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>Xu hướng bán hàng</h3>
+                            <span class="chart-subtitle">So sánh với kỳ trước</span>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="salesTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Tables Section -->
+            <div class="reports-tables">
+                <div class="table-card">
+                    <div class="table-header">
+                        <div class="table-title">
+                            <h3>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                                </svg>
+                                Báo cáo doanh thu chi tiết
+                            </h3>
+                        </div>
+                        <div class="table-actions">
+                            <select class="table-filter-select" id="revenueGroupBy">
+                                <option value="day">Theo ngày</option>
+                                <option value="week">Theo tuần</option>
+                                <option value="month" selected>Theo tháng</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-body">
+                        <table class="reports-table">
+                            <thead>
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>Số đơn hàng</th>
+                                    <th>Doanh thu</th>
+                                    <th>Chi phí</th>
+                                    <th>Lợi nhuận</th>
+                                    <th>Tăng trưởng</th>
+                                </tr>
+                            </thead>
+                            <tbody id="revenueTableBody">
+                                <!-- Data loaded from API -->
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 40px; color: #78716c;">
+                                        Đang tải dữ liệu...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer">
+                        <div class="table-summary">
+                            <div class="summary-item">
+                                <span class="summary-label">Tổng đơn hàng:</span>
+                                <span class="summary-value" id="summaryOrders">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Tổng doanh thu:</span>
+                                <span class="summary-value summary-highlight" id="summaryRevenue">0đ</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Tổng lợi nhuận:</span>
+                                <span class="summary-value summary-profit" id="summaryProfit">0đ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Export Preview Modal -->
+<div class="export-modal" id="exportModal">
+    <div class="export-modal-content export-preview-modal">
+        <!-- Loading State -->
+        <div id="exportLoadingState" style="display: none;">
+            <div class="export-spinner"></div>
+            <p>Đang xuất báo cáo...</p>
+        </div>
+
+        <!-- Preview State -->
+        <div id="exportPreviewState">
+            <div class="export-preview-header">
+                <div class="export-preview-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
+                        <path d="M4.603 14.087a.8.8 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.7 7.7 0 0 1 1.482-.645 20 20 0 0 0 1.062-2.227 7.3 7.3 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a11 11 0 0 0 .98 1.686 5.8 5.8 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.86.86 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.7 5.7 0 0 1-.911-.95 11.7 11.7 0 0 0-1.997.406 11.3 11.3 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.8.8 0 0 1-.58.029m1.379-1.901q-.25.115-.459.238c-.328.194-.541.383-.647.547-.094.145-.096.25-.04.361q.016.032.026.044l.035-.012a.8.8 0 0 0 .16-.18 2.6 2.6 0 0 0 .395-.645z"/>
+                    </svg>
+                </div>
+                <h3>Xuất Báo Cáo</h3>
+                <p class="export-preview-subtitle">Chọn định dạng và xem trước nội dung báo cáo</p>
+            </div>
+
+            <div class="export-format-selector">
+                <button class="export-format-btn active" data-format="excel" onclick="selectExportFormat('excel')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V9H3V2a1 1 0 0 1 1-1h5.5zM3 12v-2h2v2zm0 1h2v2H4a1 1 0 0 1-1-1zm3-3h2v2H6zm0 3h2v2H6zm3-3h2v2H9zm0 3h2v2H9zm3-3h2v2h-2zm0 3h2v1a1 1 0 0 1-1 1h-1z"/>
+                    </svg>
+                    <span>Excel (.xlsx)</span>
+                </button>
+                <button class="export-format-btn" data-format="pdf" onclick="selectExportFormat('pdf')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                        <path d="M4.603 14.087a.8.8 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.7 7.7 0 0 1 1.482-.645 20 20 0 0 0 1.062-2.227 7.3 7.3 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a11 11 0 0 0 .98 1.686 5.8 5.8 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.86.86 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.7 5.7 0 0 1-.911-.95 11.7 11.7 0 0 0-1.997.406 11.3 11.3 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.8.8 0 0 1-.58.029z"/>
+                    </svg>
+                    <span>PDF (.pdf)</span>
+                </button>
+            </div>
+
+            <div class="export-preview-content">
+                <div class="export-preview-summary">
+                    <h4>📊 Nội dung báo cáo</h4>
+                    <div class="export-preview-items">
+                        <div class="export-preview-item">
+                            <span class="preview-icon">📈</span>
+                            <div class="preview-info">
+                                <strong>Tổng quan KPIs</strong>
+                                <span>Doanh thu, đơn hàng, khách hàng mới</span>
+                            </div>
+                        </div>
+                        <div class="export-preview-item">
+                            <span class="preview-icon">🏆</span>
+                            <div class="preview-info">
+                                <strong>Top 10 sách bán chạy</strong>
+                                <span>Xếp hạng theo doanh số</span>
+                            </div>
+                        </div>
+                        <div class="export-preview-item">
+                            <span class="preview-icon">📂</span>
+                            <div class="preview-info">
+                                <strong>Doanh thu theo danh mục</strong>
+                                <span>Phân bổ theo thể loại sách</span>
+                            </div>
+                        </div>
+                        <div class="export-preview-item">
+                            <span class="preview-icon">📋</span>
+                            <div class="preview-info">
+                                <strong>Bảng chi tiết doanh thu</strong>
+                                <span>Theo thời gian với tăng trưởng</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="export-preview-period">
+                    <span class="period-label">📅 Kỳ báo cáo:</span>
+                    <span class="period-value" id="exportPeriodValue">30 ngày qua</span>
+                </div>
+            </div>
+
+            <div class="export-preview-actions">
+                <button class="btn-export-cancel" onclick="hideExportModal()">Hủy</button>
+                <button class="btn-export-confirm" id="confirmExportBtn" onclick="confirmExport()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                    </svg>
+                    Tải xuống Excel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- SheetJS for Excel export -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<!-- jsPDF for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// CHARTS INITIALIZATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Chart.js defaults
+Chart.defaults.font.family = "'Nunito', sans-serif";
+Chart.defaults.font.weight = '600';
+Chart.defaults.color = '#78716c';
+
+// Color palette matching admin theme
+const chartColors = {
+    teal: '#0d9488',
+    tealLight: '#14b8a6',
+    coral: '#f97316',
+    success: '#16a34a',
+    warning: '#d97706',
+    danger: '#dc2626',
+    info: '#0891b2',
+    purple: '#8b5cf6',
+    pink: '#ec4899',
+    tealGradient: (ctx) => {
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(13, 148, 136, 0.3)');
+        gradient.addColorStop(1, 'rgba(13, 148, 136, 0.01)');
+        return gradient;
+    }
+};
+
+// Initial empty data - will be loaded from API
+const monthLabels = [];
+const revenueData = [];
+const ordersData = [];
+
+// Revenue Chart
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+const revenueChart = new Chart(revenueCtx, {
+    type: 'line',
+    data: {
+        labels: ['Loading...'],
+        datasets: [{
+            label: 'Doanh thu (triệu đồng)',
+            data: [0],
+            borderColor: chartColors.teal,
+            backgroundColor: chartColors.tealGradient(revenueCtx),
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 8,
+            pointHoverBackgroundColor: chartColors.teal,
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 3
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: '#1c1917',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 16,
+                cornerRadius: 12,
+                displayColors: false,
+                callbacks: {
+                    title: function(items) {
+                        return 'Tháng ' + items[0].label;
+                    },
+                    label: function(context) {
+                        return context.parsed.y.toLocaleString('vi-VN') + ' triệu đồng';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                border: {
+                    display: false
+                }
+            },
+            y: {
+                grid: {
+                    color: 'rgba(231, 229, 228, 0.5)',
+                    drawBorder: false
+                },
+                border: {
+                    display: false
+                },
+                ticks: {
+                    callback: function(value) {
+                        return value + 'M';
+                    }
+                }
+            }
+        },
+        interaction: {
+            intersect: false,
+            mode: 'index'
+        }
+    }
+});
+
+// Order Status Chart (Doughnut)
+const orderStatusCtx = document.getElementById('orderStatusChart').getContext('2d');
+const orderStatusChart = new Chart(orderStatusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Đã giao', 'Đang giao', 'Đang xử lý', 'Đã hủy'],
+        datasets: [{
+            data: [0, 0, 0, 0],
+            backgroundColor: [
+                chartColors.success,
+                chartColors.info,
+                chartColors.warning,
+                chartColors.danger
+            ],
+            borderWidth: 0,
+            hoverOffset: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: '#1c1917',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 16,
+                cornerRadius: 12,
+                callbacks: {
+                    label: function(context) {
+                        return context.label + ': ' + context.parsed + '%';
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Legend will be generated dynamically by updateOrderStatusChart()
+
+// Category Chart (Horizontal Bar)
+const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+const categoryChart = new Chart(categoryCtx, {
+    type: 'bar',
+    data: {
+        labels: ['Loading...'],
+        datasets: [{
+            label: 'Doanh thu',
+            data: [0],
+            backgroundColor: [
+                chartColors.teal,
+                chartColors.coral,
+                chartColors.purple,
+                chartColors.info,
+                chartColors.pink,
+                '#a8a29e'
+            ],
+            borderRadius: 8,
+            borderSkipped: false,
+            barThickness: 24
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: '#1c1917',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 16,
+                cornerRadius: 12,
+                callbacks: {
+                    label: function(context) {
+                        return context.parsed.x.toLocaleString('vi-VN') + ' triệu đồng';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    color: 'rgba(231, 229, 228, 0.5)',
+                    drawBorder: false
+                },
+                border: {
+                    display: false
+                },
+                ticks: {
+                    callback: function(value) {
+                        return value + 'M';
+                    }
+                }
+            },
+            y: {
+                grid: {
+                    display: false
+                },
+                border: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// Sales Trend Chart (Comparison)
+const salesTrendCtx = document.getElementById('salesTrendChart').getContext('2d');
+const salesTrendChart = new Chart(salesTrendCtx, {
+    type: 'line',
+    data: {
+        labels: ['Loading...'],
+        datasets: [
+            {
+                label: 'Kỳ này',
+                data: [0],
+                borderColor: chartColors.teal,
+                backgroundColor: 'transparent',
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: chartColors.teal
+            },
+            {
+                label: 'Kỳ trước',
+                data: [0],
+                borderColor: '#d6d3d1',
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                tension: 0.4,
+                pointRadius: 0
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        size: 12,
+                        weight: '600'
+                    }
+                }
+            },
+            tooltip: {
+                backgroundColor: '#1c1917',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 16,
+                cornerRadius: 12
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                border: {
+                    display: false
+                }
+            },
+            y: {
+                grid: {
+                    color: 'rgba(231, 229, 228, 0.5)',
+                    drawBorder: false
+                },
+                border: {
+                    display: false
+                },
+                ticks: {
+                    callback: function(value) {
+                        return value + 'M';
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Mini Sparkline Charts
+function createSparkline(canvasId, data, color) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    return new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array(data.length).fill(''),
+            datasets: [{
+                data: data,
+                borderColor: color,
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                tension: 0.4,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+            },
+            scales: {
+                x: { display: false },
+                y: { display: false }
+            }
+        }
+    });
+}
+
+createSparkline('revenueSparkline', [30, 35, 32, 40, 45, 42, 50], chartColors.teal);
+createSparkline('ordersSparkline', [100, 120, 115, 140, 160, 155, 180], chartColors.coral);
+createSparkline('avgSparkline', [240, 245, 242, 248, 250, 248, 252], chartColors.info);
+createSparkline('customersSparkline', [80, 95, 90, 110, 130, 125, 156], chartColors.purple);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FILTER FUNCTIONALITY
+// ═══════════════════════════════════════════════════════════════════════════
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        const range = this.dataset.range;
+        const customRange = document.getElementById('customDateRange');
+
+        if (range === 'custom') {
+            customRange.style.display = 'flex';
+        } else {
+            customRange.style.display = 'none';
+            // Fetch data for selected range from backend API
+            loadReportData(range);
+        }
+    });
+});
+
+// Apply button for custom date range
+document.querySelector('.btn-apply-filter')?.addEventListener('click', function() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    if (startDate && endDate) {
+        loadReportData('custom', startDate, endDate);
+    }
+});
+
+// Function to load report data from backend
+async function loadReportData(range, startDate = null, endDate = null) {
+    try {
+        let params = `range=${range}`;
+        if (startDate) params += `&startDate=${startDate}`;
+        if (endDate) params += `&endDate=${endDate}`;
+
+        // Load overview data
+        const overviewRes = await fetch(`/admin/api/reports/overview?${params}`);
+        if (overviewRes.ok) {
+            const overview = await overviewRes.json();
+            updateOverviewCards(overview);
+        }
+
+        // Load revenue chart data
+        const chartRes = await fetch(`/admin/api/reports/revenue-chart?${params}`);
+        if (chartRes.ok) {
+            const chartData = await chartRes.json();
+            updateRevenueChart(chartData);
+        }
+
+        // Load order status distribution
+        const statusRes = await fetch(`/admin/api/reports/order-status?${params}`);
+        if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            updateOrderStatusChart(statusData);
+        }
+
+        // Load category revenue
+        const categoryRes = await fetch(`/admin/api/reports/category-revenue?${params}`);
+        if (categoryRes.ok) {
+            const categoryData = await categoryRes.json();
+            updateCategoryChart(categoryData);
+        }
+
+        // Load sales trend
+        const trendRes = await fetch(`/admin/api/reports/sales-trend?${params}`);
+        if (trendRes.ok) {
+            const trendData = await trendRes.json();
+            updateSalesTrendChart(trendData);
+        }
+
+        // Load top books
+        const booksRes = await fetch(`/admin/api/reports/top-books?${params}&limit=10`);
+        if (booksRes.ok) {
+            const booksData = await booksRes.json();
+            updateTopBooks(booksData);
+        }
+
+        // Load revenue table
+        const tableRes = await fetch(`/admin/api/reports/revenue-table?${params}&groupBy=month`);
+        if (tableRes.ok) {
+            const tableData = await tableRes.json();
+            updateRevenueTable(tableData);
+        }
+    } catch (error) {
+        console.error('Error loading report data:', error);
+    }
+}
+
+function updateOverviewCards(overview) {
+    // Update revenue card
+    const revenueEl = document.querySelector('.revenue-card-total .revenue-value');
+    if (revenueEl) {
+        revenueEl.textContent = formatCurrency(overview.totalRevenue) + 'đ';
+    }
+    const revenueGrowthEl = document.querySelector('.revenue-card-total .revenue-change span');
+    if (revenueGrowthEl && overview.revenueGrowth != null) {
+        updateGrowthDisplay(document.querySelector('.revenue-card-total .revenue-change'), overview.revenueGrowth);
+    }
+
+    // Update orders card
+    const ordersEl = document.querySelector('.revenue-card-orders .revenue-value');
+    if (ordersEl) {
+        ordersEl.textContent = overview.totalOrders || 0;
+    }
+    const ordersGrowthEl = document.querySelector('.revenue-card-orders .revenue-change');
+    if (ordersGrowthEl && overview.ordersGrowth != null) {
+        updateGrowthDisplay(ordersGrowthEl, overview.ordersGrowth);
+    }
+
+    // Update avg value card
+    const avgEl = document.querySelector('.revenue-card-avg .revenue-value');
+    if (avgEl) {
+        avgEl.textContent = formatCurrency(overview.avgOrderValue) + 'đ';
+    }
+    const avgGrowthEl = document.querySelector('.revenue-card-avg .revenue-change');
+    if (avgGrowthEl && overview.avgValueGrowth != null) {
+        updateGrowthDisplay(avgGrowthEl, overview.avgValueGrowth);
+    }
+
+    // Update customers card
+    const custEl = document.querySelector('.revenue-card-customers .revenue-value');
+    if (custEl) {
+        custEl.textContent = overview.newCustomers || 0;
+    }
+    const custGrowthEl = document.querySelector('.revenue-card-customers .revenue-change');
+    if (custGrowthEl && overview.customersGrowth != null) {
+        updateGrowthDisplay(custGrowthEl, overview.customersGrowth);
+    }
+}
+
+function updateGrowthDisplay(element, growth) {
+    if (!element) return;
+
+    const isPositive = growth >= 0;
+    const isNeutral = growth === 0;
+
+    element.className = 'revenue-change ' + (isNeutral ? 'revenue-neutral' : (isPositive ? 'revenue-up' : 'revenue-down'));
+
+    const iconSvg = isNeutral
+        ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 4"/></svg>'
+        : (isPositive
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5"/></svg>'
+            : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4"/></svg>');
+
+    const text = isNeutral ? 'Ổn định' : `${isPositive ? '+' : ''}${growth.toFixed(1)}% so với kỳ trước`;
+
+    element.innerHTML = iconSvg + '<span>' + text + '</span>';
+}
+
+function updateOrderStatusChart(statusData) {
+    if (!orderStatusChart || !statusData) return;
+
+    // Map status names to Vietnamese labels
+    const statusLabels = {
+        'DELIVERED': 'Đã giao',
+        'SHIPPED': 'Đang giao',
+        'PROCESSING': 'Đang xử lý',
+        'CANCELLED': 'Đã hủy'
+    };
+
+    const statusColors = {
+        'DELIVERED': chartColors.success,
+        'SHIPPED': chartColors.info,
+        'PROCESSING': chartColors.warning,
+        'CANCELLED': chartColors.danger
+    };
+
+    const labels = [];
+    const data = [];
+    const colors = [];
+    let total = 0;
+
+    // Calculate total
+    for (const [status, count] of Object.entries(statusData)) {
+        total += count;
+    }
+
+    // Calculate percentages
+    for (const status of ['DELIVERED', 'SHIPPED', 'PROCESSING', 'CANCELLED']) {
+        const count = statusData[status] || 0;
+        const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+        labels.push(statusLabels[status]);
+        data.push(percentage);
+        colors.push(statusColors[status]);
+    }
+
+    // Update chart
+    orderStatusChart.data.labels = labels;
+    orderStatusChart.data.datasets[0].data = data;
+    orderStatusChart.data.datasets[0].backgroundColor = colors;
+    orderStatusChart.update();
+
+    // Update legend
+    const legendContainer = document.getElementById('orderStatusLegend');
+    if (legendContainer) {
+        legendContainer.innerHTML = '';
+        labels.forEach((label, index) => {
+            const legendItem = document.createElement('div');
+            legendItem.className = 'legend-item';
+            legendItem.innerHTML = `
+                <span class="legend-color" style="background-color: ${colors[index]}"></span>
+                <span class="legend-label">${label}</span>
+                <span class="legend-value">${data[index]}%</span>
+            `;
+            legendContainer.appendChild(legendItem);
+        });
+    }
+}
+
+function updateRevenueChart(chartData) {
+    if (revenueChart && chartData.labels && chartData.data) {
+        revenueChart.data.labels = chartData.labels;
+        revenueChart.data.datasets[0].data = chartData.data.map(v => v / 1000000); // Convert to millions
+        revenueChart.update();
+    }
+}
+
+function updateCategoryChart(categoryData) {
+    if (categoryChart && categoryData.length > 0) {
+        const categoryColors = [
+            chartColors.teal,
+            chartColors.coral,
+            chartColors.purple,
+            chartColors.info,
+            chartColors.pink,
+            '#a8a29e'
+        ];
+        categoryChart.data.labels = categoryData.map(c => c.categoryName);
+        categoryChart.data.datasets[0].data = categoryData.map(c => c.revenue / 1000000);
+        categoryChart.data.datasets[0].backgroundColor = categoryData.map((_, i) => categoryColors[i % categoryColors.length]);
+        categoryChart.update();
+    }
+}
+
+function updateSalesTrendChart(trendData) {
+    if (salesTrendChart && trendData.labels) {
+        salesTrendChart.data.labels = trendData.labels;
+        salesTrendChart.data.datasets[0].data = trendData.currentPeriod.map(v => v / 1000000);
+        salesTrendChart.data.datasets[1].data = trendData.previousPeriod.map(v => v / 1000000);
+        salesTrendChart.update();
+    }
+}
+
+function updateTopBooks(booksData) {
+    const container = document.querySelector('.top-products-list');
+    if (!container) return;
+    
+    container.innerHTML = booksData.map((book, index) => `
+        <div class="top-product-item">
+            <span class="product-rank">${index + 1}</span>
+            <div class="product-cover">
+                <span>${book.title.substring(0, 2).toUpperCase()}</span>
+            </div>
+            <div class="product-info">
+                <h4>${book.title}</h4>
+                <span>${book.author}</span>
+            </div>
+            <div class="product-stats">
+                <span class="product-sold">${book.soldCount} đã bán</span>
+                <span class="product-revenue">${formatCurrency(book.revenue)}đ</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateRevenueTable(tableData) {
+    const tbody = document.getElementById('revenueTableBody');
+    if (!tbody) return;
+
+    if (!tableData || tableData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #78716c;">Không có dữ liệu</td></tr>';
+        return;
+    }
+
+    // Calculate totals
+    let totalOrders = 0;
+    let totalRevenue = 0;
+    let totalProfit = 0;
+
+    tableData.forEach(row => {
+        totalOrders += row.orderCount || 0;
+        totalRevenue += row.revenue || 0;
+        totalProfit += row.profit || 0;
+    });
+
+    tbody.innerHTML = tableData.map(row => `
+        <tr>
+            <td>
+                <div class="date-cell">
+                    <span class="date-main">${row.periodLabel}</span>
+                </div>
+            </td>
+            <td><span class="orders-count">${row.orderCount}</span></td>
+            <td><span class="revenue-amount">${formatCurrency(row.revenue)}đ</span></td>
+            <td><span class="cost-amount">${formatCurrency(row.cost)}đ</span></td>
+            <td><span class="profit-amount ${row.profit > 0 ? 'profit-positive' : ''}">${formatCurrency(row.profit)}đ</span></td>
+            <td>
+                <span class="growth-badge ${row.growthPercent >= 0 ? 'growth-positive' : 'growth-negative'}">
+                    ${row.growthPercent >= 0 ? '+' : ''}${row.growthPercent.toFixed(1)}%
+                </span>
+            </td>
+        </tr>
+    `).join('');
+
+    // Update summary
+    const summaryOrders = document.getElementById('summaryOrders');
+    const summaryRevenue = document.getElementById('summaryRevenue');
+    const summaryProfit = document.getElementById('summaryProfit');
+
+    if (summaryOrders) summaryOrders.textContent = formatCurrency(totalOrders);
+    if (summaryRevenue) summaryRevenue.textContent = formatCurrency(totalRevenue) + 'đ';
+    if (summaryProfit) summaryProfit.textContent = formatCurrency(totalProfit) + 'đ';
+}
+
+function formatCurrency(value) {
+    if (value == null || isNaN(value)) return '0';
+    return new Intl.NumberFormat('vi-VN').format(Math.round(value));
+}
+
+// Chart type toggle
+document.querySelectorAll('.chart-option').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.chart-option').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        const type = this.dataset.chartType;
+        revenueChart.config.type = type;
+        revenueChart.update();
+    });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SEED MOCK DATA
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function seedMockData() {
+    if (!confirm('Bạn có muốn tạo dữ liệu mẫu cho báo cáo không?\n(Sẽ tạo khoảng 300 đơn hàng trong 12 tháng)')) {
+        return;
+    }
+
+    showExportModal();
+    document.querySelector('.export-modal-content p').textContent = 'Đang tạo dữ liệu mẫu...';
+
+    try {
+        const response = await fetch('/admin/api/reports/seed-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert(`Tạo dữ liệu thành công!\n- Danh mục: ${result.categoriesCount}\n- Sách: ${result.booksCount}\n- Đơn hàng mới: ${result.invoicesCreated}\n- Tổng đơn hàng: ${result.totalInvoices}`);
+            // Reload report data
+            loadReportData('month');
+        } else {
+            alert('Lỗi: ' + (result.error || 'Không thể tạo dữ liệu'));
+        }
+    } catch (error) {
+        console.error('Error seeding data:', error);
+        alert('Lỗi khi tạo dữ liệu: ' + error.message);
+    } finally {
+        hideExportModal();
+        document.querySelector('.export-modal-content p').textContent = 'Đang xuất báo cáo...';
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EXPORT MODAL FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+let currentExportFormat = 'excel';
+
+function showExportModal() {
+    document.getElementById('exportModal').classList.add('active');
+}
+
+function hideExportModal() {
+    document.getElementById('exportModal').classList.remove('active');
+}
+
+function showExportPreview(format) {
+    currentExportFormat = format || 'excel';
+
+    // Update period text
+    const activeFilter = document.querySelector('.filter-btn.active');
+    const periodTexts = {
+        'today': 'Hôm nay',
+        'week': '7 ngày qua',
+        'month': '30 ngày qua',
+        'quarter': 'Quý này',
+        'year': 'Năm nay'
+    };
+    const range = activeFilter ? activeFilter.dataset.range : 'month';
+    document.getElementById('exportPeriodValue').textContent = periodTexts[range] || range;
+
+    // Set format button
+    selectExportFormat(currentExportFormat);
+
+    // Show preview state, hide loading
+    document.getElementById('exportPreviewState').style.display = 'block';
+    document.getElementById('exportLoadingState').style.display = 'none';
+
+    showExportModal();
+}
+
+function selectExportFormat(format) {
+    currentExportFormat = format;
+
+    // Update buttons
+    document.querySelectorAll('.export-format-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`.export-format-btn[data-format="${format}"]`).classList.add('active');
+
+    // Update confirm button
+    const confirmBtn = document.getElementById('confirmExportBtn');
+    if (format === 'pdf') {
+        confirmBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+            </svg>
+            Tải xuống PDF
+        `;
+        confirmBtn.classList.add('pdf-mode');
+    } else {
+        confirmBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+            </svg>
+            Tải xuống Excel
+        `;
+        confirmBtn.classList.remove('pdf-mode');
+    }
+}
+
+function confirmExport() {
+    // Show loading state
+    document.getElementById('exportPreviewState').style.display = 'none';
+    document.getElementById('exportLoadingState').style.display = 'block';
+
+    // Perform export
+    if (currentExportFormat === 'pdf') {
+        doExportPDF();
+    } else {
+        doExportExcel();
+    }
+}
+
+function doExportExcel() {
+    const activeFilter = document.querySelector('.filter-btn.active');
+    const range = activeFilter ? activeFilter.dataset.range : 'month';
+
+    let url = '/admin/api/reports/export/excel?range=' + range;
+
+    if (range === 'custom') {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        if (startDate) url += '&startDate=' + startDate;
+        if (endDate) url += '&endDate=' + endDate;
+    }
+
+    window.location.href = url;
+    setTimeout(hideExportModal, 1500);
+}
+
+function doExportPDF() {
+    const activeFilter = document.querySelector('.filter-btn.active');
+    const range = activeFilter ? activeFilter.dataset.range : 'month';
+
+    let url = '/admin/api/reports/export/pdf?range=' + range;
+
+    if (range === 'custom') {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        if (startDate) url += '&startDate=' + startDate;
+        if (endDate) url += '&endDate=' + endDate;
+    }
+
+    window.location.href = url;
+    setTimeout(hideExportModal, 1500);
+}
+
+function exportToExcel() {
+    showExportPreview('excel');
+}
+
+function exportToPDF() {
+    showExportPreview('pdf');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SIDEBAR ACTIVE STATE & INITIAL DATA LOAD
+// ═══════════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+    // Set active state for reports menu
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    const reportsLink = document.querySelector('.nav-link[data-menu="reports"]');
+    if (reportsLink) {
+        reportsLink.classList.add('active');
+    }
+
+    // Load data on page load with default range (month)
+    loadReportData('month');
+});
+</script>
+</body>
+</html>

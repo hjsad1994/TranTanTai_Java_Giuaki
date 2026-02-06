@@ -1,0 +1,2286 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Tồn Kho - BookHaven Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin.css?v=5}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="admin-body">
+<div class="admin-wrapper">
+    <th:block th:replace="~{admin/layout::sidebar}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/layout::topbar}"></th:block>
+
+        <main class="admin-content">
+            <!-- Page Header -->
+            <div class="page-header inventory-header">
+                <div class="page-header-content">
+                    <h1 class="page-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                        </svg>
+                        Quản Lý Tồn Kho
+                    </h1>
+                    <p class="page-subtitle">Theo dõi và quản lý số lượng sách trong kho</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn-admin btn-admin-secondary" onclick="openExportModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                            <path d="M4.603 14.087a.8.8 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.7 7.7 0 0 1 1.482-.645 20 20 0 0 0 1.062-2.227 7.3 7.3 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a11 11 0 0 0 .98 1.686 5.8 5.8 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.86.86 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.7 5.7 0 0 1-.911-.95 11.7 11.7 0 0 0-1.997.406 11.3 11.3 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.8.8 0 0 1-.58.029m1.379-1.901q-.25.115-.459.238c-.328.194-.541.383-.647.547-.094.145-.096.25-.04.361q.016.032.026.044l.035-.012a.6.6 0 0 0 .168-.107c.145-.129.33-.342.526-.59.18-.228.358-.49.522-.772M6.04 8.05a8 8 0 0 1-.366-1.212a7.87 7.87 0 0 0-.09 1.107c-.009.42.02.88.057 1.378l.125-.292a21 21 0 0 0 .274-.65"/>
+                        </svg>
+                        Xuất báo cáo PDF
+                    </button>
+                    <a href="/admin/books/add" class="btn-admin btn-admin-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                        </svg>
+                        Nhập kho mới
+                    </a>
+                </div>
+            </div>
+
+            <!-- Inventory Stats Cards -->
+            <div class="inventory-stats">
+                <div class="inv-stat-card inv-total">
+                    <div class="inv-stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                        </svg>
+                    </div>
+                    <div class="inv-stat-content">
+                        <span class="inv-stat-value" th:text="${totalStock ?: 0}">1,234</span>
+                        <span class="inv-stat-label">Tổng số sách</span>
+                    </div>
+                    <div class="inv-stat-trend trend-up">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5"/>
+                        </svg>
+                        +12%
+                    </div>
+                </div>
+
+                <div class="inv-stat-card inv-instock">
+                    <div class="inv-stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                        </svg>
+                    </div>
+                    <div class="inv-stat-content">
+                        <span class="inv-stat-value" th:text="${booksInStock ?: 0}">156</span>
+                        <span class="inv-stat-label">Còn hàng</span>
+                    </div>
+                    <div class="inv-stat-badge badge-success" th:text="${percentInStock ?: 0} + '%'">85%</div>
+                </div>
+
+                <div class="inv-stat-card inv-lowstock">
+                    <div class="inv-stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                        </svg>
+                    </div>
+                    <div class="inv-stat-content">
+                        <span class="inv-stat-value" th:text="${lowStockCount ?: 0}">12</span>
+                        <span class="inv-stat-label">Sắp hết hàng</span>
+                    </div>
+                    <div class="inv-stat-badge badge-warning">Cảnh báo</div>
+                </div>
+
+                <div class="inv-stat-card inv-outstock">
+                    <div class="inv-stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
+                        </svg>
+                    </div>
+                    <div class="inv-stat-content">
+                        <span class="inv-stat-value" th:text="${outOfStockCount ?: 0}">5</span>
+                        <span class="inv-stat-label">Hết hàng</span>
+                    </div>
+                    <div class="inv-stat-badge badge-danger">Cần nhập</div>
+                </div>
+            </div>
+
+            <!-- Alert for Low Stock -->
+            <div class="inventory-alert" th:if="${lowStockCount != null and lowStockCount > 0}">
+                <div class="alert-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                </div>
+                <div class="alert-content">
+                    <strong>Cảnh báo tồn kho thấp!</strong>
+                    <p>Có <span th:text="${lowStockCount}">12</span> sản phẩm sắp hết hàng và <span th:text="${outOfStockCount ?: 0}">5</span> sản phẩm đã hết hàng. Vui lòng kiểm tra và nhập thêm hàng.</p>
+                </div>
+                <button class="alert-action" onclick="scrollToLowStock()">Xem ngay</button>
+            </div>
+
+            <!-- Quick Filters -->
+            <div class="inventory-filters">
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">
+                        <span class="tab-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M3 2v4.586l7 7L14.586 9l-7-7zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586z"/>
+                            </svg>
+                        </span>
+                        Tất cả
+                        <span class="tab-count" th:text="${totalBooks ?: books.size()}">173</span>
+                    </button>
+                    <button class="filter-tab" data-filter="instock">
+                        <span class="tab-icon tab-icon-success">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                            </svg>
+                        </span>
+                        Còn hàng
+                        <span class="tab-count" th:text="${booksInStock ?: 0}">156</span>
+                    </button>
+                    <button class="filter-tab" data-filter="lowstock">
+                        <span class="tab-icon tab-icon-warning">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                            </svg>
+                        </span>
+                        Sắp hết
+                        <span class="tab-count" th:text="${lowStockCount ?: 0}">12</span>
+                    </button>
+                    <button class="filter-tab" data-filter="outstock">
+                        <span class="tab-icon tab-icon-danger">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
+                            </svg>
+                        </span>
+                        Hết hàng
+                        <span class="tab-count" th:text="${outOfStockCount ?: 0}">5</span>
+                    </button>
+                </div>
+                <div class="filter-search">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                    </svg>
+                    <input type="text" placeholder="Tìm kiếm sách..." id="inventorySearch">
+                </div>
+            </div>
+
+            <!-- Inventory Table -->
+            <div class="inventory-table-card">
+                <div class="table-responsive">
+                    <table class="inventory-table" id="inventoryTable">
+                        <thead>
+                        <tr>
+                            <th style="width: 45%;">Sản phẩm</th>
+                            <th style="width: 12%;">Danh mục</th>
+                            <th style="width: 10%;">Giá bán</th>
+                            <th style="width: 13%;">Tồn kho</th>
+                            <th style="width: 10%;">Trạng thái</th>
+                            <th style="width: 10%;">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="book : ${books}"
+                            th:data-quantity="${book.quantity}"
+                            th:class="${book.quantity == 0} ? 'row-outstock' : (${book.quantity <= 5} ? 'row-lowstock' : '')">
+                            <td>
+                                <div class="product-cell">
+                                    <div class="product-thumb">
+                                        <span th:text="${#strings.substring(book.title, 0, 2)}">BK</span>
+                                    </div>
+                                    <div class="product-info">
+                                        <span class="product-name" th:text="${book.title}">Tên sách</span>
+                                        <span class="product-author" th:text="${book.author}">Tác giả</span>
+                                        <span class="product-id" th:text="'SKU: ' + ${book.id}">SKU: 12345</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="category-tag" th:text="${book.category?.name ?: 'Chưa phân loại'}">Danh mục</span>
+                            </td>
+                            <td>
+                                <span class="price-value" th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">100.000đ</span>
+                            </td>
+                            <td>
+                                <div class="quantity-control">
+                                    <button class="qty-btn qty-minus" th:data-book-id="${book.id}" onclick="adjustQuantity(this, -1)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
+                                        </svg>
+                                    </button>
+                                    <input type="number" class="qty-input" th:value="${book.quantity}" th:data-book-id="${book.id}" th:data-original="${book.quantity}" min="0">
+                                    <button class="qty-btn qty-plus" th:data-book-id="${book.id}" onclick="adjustQuantity(this, 1)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <span th:if="${book.quantity == 0}" class="stock-status status-out">
+                                    <span class="status-dot"></span>
+                                    Hết hàng
+                                </span>
+                                <span th:if="${book.quantity > 0 and book.quantity <= 5}" class="stock-status status-low">
+                                    <span class="status-dot"></span>
+                                    Sắp hết
+                                </span>
+                                <span th:if="${book.quantity > 5}" class="stock-status status-ok">
+                                    <span class="status-dot"></span>
+                                    Còn hàng
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn action-save" th:data-book-id="${book.id}" onclick="saveQuantity(this)" title="Lưu thay đổi" style="display: none;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                                        </svg>
+                                    </button>
+                                    <a th:href="@{/admin/books/edit/{id}(id=${book.id})}" class="action-btn action-edit" title="Chỉnh sửa">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293z"/>
+                                        </svg>
+                                    </a>
+                                    <button class="action-btn action-history" th:data-book-id="${book.id}" th:data-book-title="${book.title}" onclick="showHistory(this)" title="Lịch sử">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022zm2.004.45a7 7 0 0 0-.985-.299l.219-.976q.576.129 1.126.342zm1.37.71a7 7 0 0 0-.439-.27l.493-.87a8 8 0 0 1 .979.654l-.615.789a7 7 0 0 0-.418-.302zm1.834 1.79a7 7 0 0 0-.653-.796l.724-.69q.406.429.747.91zm.744 1.352a7 7 0 0 0-.214-.468l.893-.45a8 8 0 0 1 .45 1.088l-.95.313a7 7 0 0 0-.179-.483m.53 2.507a7 7 0 0 0-.1-1.025l.985-.17q.1.58.116 1.17zm-.131 1.538q.05-.254.081-.51l.993.123a8 8 0 0 1-.23 1.155l-.964-.267q.069-.247.12-.501m-.952 2.379q.276-.436.486-.908l.914.405q-.24.54-.555 1.038zm-.964 1.205q.183-.183.35-.378l.758.653a8 8 0 0 1-.401.432z"/>
+                                            <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0z"/>
+                                            <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div class="table-empty" th:if="${books.empty}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                    </svg>
+                    <h3>Kho hàng trống</h3>
+                    <p>Bắt đầu thêm sách vào hệ thống</p>
+                    <a href="/admin/books/add" class="btn-admin btn-admin-primary">
+                        Thêm sách mới
+                    </a>
+                </div>
+
+                <!-- Pagination -->
+                <div class="table-pagination" th:if="${totalPages != null and totalPages > 0}">
+                    <div class="pagination-info">
+                        Hiển thị <span th:text="${books.size()}">10</span> / <span th:text="${totalBooks ?: books.size()}">100</span> sản phẩm
+                    </div>
+                    <nav class="pagination-nav">
+                        <ul class="pagination">
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/inventory(pageNo=${currentPage - 1})}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+                                    </svg>
+                                </a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages)}" th:classappend="${currentPage == i} ? 'active'">
+                                <a class="page-link" th:href="@{/admin/inventory(pageNo=${i})}" th:text="${i + 1}">1</a>
+                            </li>
+                            <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/inventory(pageNo=${currentPage + 1})}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                    </svg>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Stock Update Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- History Modal -->
+<div class="history-modal-overlay" id="historyModal" style="display: none;">
+    <div class="history-modal">
+        <div class="history-modal-header">
+            <h3>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022zm2.004.45a7 7 0 0 0-.985-.299l.219-.976q.576.129 1.126.342zm1.37.71a7 7 0 0 0-.439-.27l.493-.87a8 8 0 0 1 .979.654l-.615.789a7 7 0 0 0-.418-.302zm1.834 1.79a7 7 0 0 0-.653-.796l.724-.69q.406.429.747.91zm.744 1.352a7 7 0 0 0-.214-.468l.893-.45a8 8 0 0 1 .45 1.088l-.95.313a7 7 0 0 0-.179-.483m.53 2.507a7 7 0 0 0-.1-1.025l.985-.17q.1.58.116 1.17zm-.131 1.538q.05-.254.081-.51l.993.123a8 8 0 0 1-.23 1.155l-.964-.267q.069-.247.12-.501m-.952 2.379q.276-.436.486-.908l.914.405q-.24.54-.555 1.038zm-.964 1.205q.183-.183.35-.378l.758.653a8 8 0 0 1-.401.432z"/>
+                    <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0z"/>
+                    <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5"/>
+                </svg>
+                Lịch sử tồn kho
+            </h3>
+            <button class="close-modal" onclick="closeHistoryModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="history-book-info" id="historyBookInfo">
+            <span class="history-book-title"></span>
+        </div>
+        <div class="history-modal-body" id="historyContent">
+            <!-- History items will be loaded here -->
+            <div class="history-empty">
+                <p>Chưa có lịch sử thay đổi</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="export-modal-overlay" id="exportModal" style="display: none;">
+    <div class="export-modal">
+        <div class="export-modal-header">
+            <div class="export-modal-title">
+                <div class="export-icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                        <path d="M4.603 14.087a.8.8 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.7 7.7 0 0 1 1.482-.645 20 20 0 0 0 1.062-2.227 7.3 7.3 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a11 11 0 0 0 .98 1.686 5.8 5.8 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.86.86 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.7 5.7 0 0 1-.911-.95 11.7 11.7 0 0 0-1.997.406 11.3 11.3 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.8.8 0 0 1-.58.029"/>
+                    </svg>
+                </div>
+                <div class="export-title-text">
+                    <h3>Xuất báo cáo tồn kho</h3>
+                    <p>Tạo báo cáo PDF chuyên nghiệp</p>
+                </div>
+            </div>
+            <button class="export-modal-close" onclick="closeExportModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="export-modal-body">
+            <!-- Preview Stats -->
+            <div class="export-preview-stats">
+                <div class="preview-stat">
+                    <div class="preview-stat-icon stat-total">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2zM3.564 2.539L5.596 5 8 5.961 14.154 3.5zM15 4.239l-6.5 2.6v7.922l6.5-2.6zM7.5 14.762V6.838L1 4.239v7.923z"/>
+                        </svg>
+                    </div>
+                    <div class="preview-stat-info">
+                        <span class="preview-stat-value" th:text="${totalBooks ?: 0}">0</span>
+                        <span class="preview-stat-label">Tổng sản phẩm</span>
+                    </div>
+                </div>
+                <div class="preview-stat">
+                    <div class="preview-stat-icon stat-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                        </svg>
+                    </div>
+                    <div class="preview-stat-info">
+                        <span class="preview-stat-value" th:text="${booksInStock ?: 0}">0</span>
+                        <span class="preview-stat-label">Còn hàng</span>
+                    </div>
+                </div>
+                <div class="preview-stat">
+                    <div class="preview-stat-icon stat-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
+                            <path d="M8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                        </svg>
+                    </div>
+                    <div class="preview-stat-info">
+                        <span class="preview-stat-value" th:text="${lowStockCount ?: 0}">0</span>
+                        <span class="preview-stat-label">Sắp hết</span>
+                    </div>
+                </div>
+                <div class="preview-stat">
+                    <div class="preview-stat-icon stat-danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
+                        </svg>
+                    </div>
+                    <div class="preview-stat-info">
+                        <span class="preview-stat-value" th:text="${outOfStockCount ?: 0}">0</span>
+                        <span class="preview-stat-label">Hết hàng</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Options -->
+            <div class="export-filter-section">
+                <h4>Bộ lọc dữ liệu</h4>
+                <div class="export-filter-options">
+                    <label class="filter-option active" data-filter="all">
+                        <input type="radio" name="exportFilter" value="all" checked>
+                        <span class="filter-option-content">
+                            <span class="filter-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M3 2v4.586l7 7L14.586 9l-7-7zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586z"/>
+                                </svg>
+                            </span>
+                            <span class="filter-text">
+                                <strong>Tất cả sản phẩm</strong>
+                                <small>Báo cáo đầy đủ toàn bộ kho</small>
+                            </span>
+                        </span>
+                    </label>
+                    <label class="filter-option" data-filter="lowstock">
+                        <input type="radio" name="exportFilter" value="lowstock">
+                        <span class="filter-option-content">
+                            <span class="filter-icon filter-icon-warning">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
+                                </svg>
+                            </span>
+                            <span class="filter-text">
+                                <strong>Sản phẩm sắp hết</strong>
+                                <small>Số lượng từ 1-5 đơn vị</small>
+                            </span>
+                        </span>
+                    </label>
+                    <label class="filter-option" data-filter="outofstock">
+                        <input type="radio" name="exportFilter" value="outofstock">
+                        <span class="filter-option-content">
+                            <span class="filter-icon filter-icon-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
+                                </svg>
+                            </span>
+                            <span class="filter-text">
+                                <strong>Sản phẩm hết hàng</strong>
+                                <small>Cần nhập khẩn cấp</small>
+                            </span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Report Features -->
+            <div class="export-features">
+                <h4>Báo cáo bao gồm</h4>
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                        </svg>
+                        <span>Tổng quan tồn kho với biểu đồ trực quan</span>
+                    </div>
+                    <div class="feature-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                        </svg>
+                        <span>Bảng chi tiết tồn kho từng sản phẩm</span>
+                    </div>
+                    <div class="feature-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                        </svg>
+                        <span>Danh sách ưu tiên nhập hàng theo mức độ</span>
+                    </div>
+                    <div class="feature-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                        </svg>
+                        <span>Khuyến nghị nhập hàng tự động</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="export-modal-footer">
+            <button class="btn-export-cancel" onclick="closeExportModal()">Hủy bỏ</button>
+            <button class="btn-export-download" onclick="downloadInventoryPdf()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                </svg>
+                Tải xuống PDF
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div class="export-loading" id="exportLoading">
+            <div class="export-loading-content">
+                <div class="export-spinner"></div>
+                <span>Đang tạo báo cáo...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/admin.js}"></script>
+<script th:inline="javascript">
+    // ═══════════════════════════════════════════════════════════════════════════
+    // INVENTORY MANAGEMENT SCRIPTS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    // CSRF Token for API requests
+    const csrfToken = /*[[${_csrf.token}]]*/ '';
+    const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+
+    // Store original values for change detection
+    const originalValues = new Map();
+    document.querySelectorAll('.qty-input').forEach(input => {
+        originalValues.set(input.dataset.bookId, parseInt(input.value));
+    });
+
+    // Adjust quantity with buttons
+    function adjustQuantity(btn, delta) {
+        const row = btn.closest('tr');
+        const input = row.querySelector('.qty-input');
+        const saveBtn = row.querySelector('.action-save');
+        const bookId = input.dataset.bookId;
+
+        let newValue = Math.max(0, parseInt(input.value || 0) + delta);
+        input.value = newValue;
+
+        // Show/hide save button based on change
+        const original = originalValues.get(bookId);
+        if (newValue !== original) {
+            saveBtn.style.display = 'flex';
+            input.classList.add('changed');
+        } else {
+            saveBtn.style.display = 'none';
+            input.classList.remove('changed');
+        }
+
+        updateRowStatus(row, newValue);
+    }
+
+    // Handle manual input change
+    document.querySelectorAll('.qty-input').forEach(input => {
+        input.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const saveBtn = row.querySelector('.action-save');
+            const bookId = this.dataset.bookId;
+            const newValue = Math.max(0, parseInt(this.value) || 0);
+            this.value = newValue;
+
+            const original = originalValues.get(bookId);
+            if (newValue !== original) {
+                saveBtn.style.display = 'flex';
+                this.classList.add('changed');
+            } else {
+                saveBtn.style.display = 'none';
+                this.classList.remove('changed');
+            }
+
+            updateRowStatus(row, newValue);
+        });
+    });
+
+    // Update row status based on quantity
+    function updateRowStatus(row, quantity) {
+        row.classList.remove('row-outstock', 'row-lowstock');
+        const statusCell = row.querySelector('.stock-status');
+
+        if (quantity === 0) {
+            row.classList.add('row-outstock');
+            statusCell.className = 'stock-status status-out';
+            statusCell.innerHTML = '<span class="status-dot"></span>Hết hàng';
+        } else if (quantity <= 5) {
+            row.classList.add('row-lowstock');
+            statusCell.className = 'stock-status status-low';
+            statusCell.innerHTML = '<span class="status-dot"></span>Sắp hết';
+        } else {
+            statusCell.className = 'stock-status status-ok';
+            statusCell.innerHTML = '<span class="status-dot"></span>Còn hàng';
+        }
+    }
+
+    // Save quantity change
+    function saveQuantity(btn) {
+        const row = btn.closest('tr');
+        const input = row.querySelector('.qty-input');
+        const bookId = input.dataset.bookId;
+        const newQuantity = parseInt(input.value);
+
+        btn.innerHTML = '<span class="btn-spinner"></span>';
+        btn.disabled = true;
+
+        // Make API call to update quantity
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+        headers[csrfHeader] = csrfToken;
+        
+        fetch(`/api/v1/books/${bookId}/quantity`, {
+            method: 'PATCH',
+            headers: headers,
+            body: JSON.stringify({ quantity: newQuantity })
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Failed to update');
+        })
+        .then(data => {
+            showToast('success', 'Cập nhật thành công', `Số lượng đã được cập nhật thành ${newQuantity}`);
+            originalValues.set(bookId, newQuantity);
+            input.classList.remove('changed');
+            btn.style.display = 'none';
+        })
+        .catch(error => {
+            showToast('error', 'Lỗi cập nhật', 'Không thể cập nhật số lượng. Vui lòng thử lại.');
+            input.value = originalValues.get(bookId);
+            updateRowStatus(row, originalValues.get(bookId));
+        })
+        .finally(() => {
+            btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/></svg>';
+            btn.disabled = false;
+        });
+    }
+
+    // Filter tabs
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            const filter = this.dataset.filter;
+            const rows = document.querySelectorAll('#inventoryTable tbody tr');
+
+            rows.forEach(row => {
+                const quantity = parseInt(row.dataset.quantity);
+                let show = false;
+
+                switch(filter) {
+                    case 'all':
+                        show = true;
+                        break;
+                    case 'instock':
+                        show = quantity > 5;
+                        break;
+                    case 'lowstock':
+                        show = quantity > 0 && quantity <= 5;
+                        break;
+                    case 'outstock':
+                        show = quantity === 0;
+                        break;
+                }
+
+                row.style.display = show ? '' : 'none';
+            });
+        });
+    });
+
+    // Search functionality
+    document.getElementById('inventorySearch')?.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#inventoryTable tbody tr');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
+
+    // Toast notification
+    function showToast(type, title, message) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast-item toast-${type}`;
+
+        const icon = type === 'success'
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>'
+            : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/></svg>';
+
+        toast.innerHTML = `
+            <div class="toast-icon">${icon}</div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close" onclick="this.parentElement.remove()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                </svg>
+            </button>
+        `;
+
+        container.appendChild(toast);
+
+        // Animate in
+        setTimeout(() => toast.classList.add('show'), 10);
+
+        // Auto remove after 5s
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    // Scroll to low stock items
+    function scrollToLowStock() {
+        // Click the low stock tab
+        document.querySelector('[data-filter="lowstock"]').click();
+
+        // Scroll to table
+        document.querySelector('.inventory-table-card').scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+
+    // Export inventory report
+    function exportInventory() {
+        showToast('success', 'Đang xuất báo cáo', 'Báo cáo tồn kho đang được tạo...');
+        // In production, this would trigger a file download
+    }
+
+    // History modal
+    function showHistory(btn) {
+        const bookId = btn.dataset.bookId;
+        const bookTitle = btn.dataset.bookTitle;
+        const modal = document.getElementById('historyModal');
+        const titleEl = modal.querySelector('.history-book-title');
+
+        titleEl.textContent = bookTitle;
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+        document.body.style.overflow = 'hidden';
+
+        // In production, load actual history via API
+    }
+
+    function closeHistoryModal() {
+        const modal = document.getElementById('historyModal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+
+    // Close history modal on overlay click
+    document.getElementById('historyModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeHistoryModal();
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // EXPORT MODAL FUNCTIONS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function openExportModal() {
+        const modal = document.getElementById('exportModal');
+        modal.style.display = 'flex';
+        // Trigger reflow for animation
+        modal.offsetHeight;
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeExportModal() {
+        const modal = document.getElementById('exportModal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 400);
+    }
+
+    // Filter option selection
+    document.querySelectorAll('.filter-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.filter-option').forEach(o => o.classList.remove('active'));
+            this.classList.add('active');
+            this.querySelector('input').checked = true;
+        });
+    });
+
+    // Download PDF
+    function downloadInventoryPdf() {
+        const filter = document.querySelector('input[name="exportFilter"]:checked').value;
+        const loadingEl = document.getElementById('exportLoading');
+
+        // Show loading
+        loadingEl.classList.add('active');
+
+        // Make API call
+        fetch(`/admin/api/inventory/export/pdf?filter=${filter}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Export failed');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `BookHaven_Inventory_${new Date().toISOString().split('T')[0]}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+
+                // Hide loading and close modal
+                loadingEl.classList.remove('active');
+                closeExportModal();
+
+                showToast('success', 'Xuất báo cáo thành công', 'Báo cáo tồn kho đã được tải xuống');
+            })
+            .catch(error => {
+                loadingEl.classList.remove('active');
+                showToast('error', 'Lỗi xuất báo cáo', 'Không thể tạo báo cáo. Vui lòng thử lại.');
+                console.error('Export error:', error);
+            });
+    }
+
+    // Close modal on overlay click
+    document.getElementById('exportModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeExportModal();
+    });
+
+    // ESC to close export modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeExportModal();
+            closeHistoryModal();
+        }
+    });
+</script>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   INVENTORY MANAGEMENT STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Page Header */
+.inventory-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.page-header-content {
+    flex: 1;
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin: 0 0 var(--space-xs);
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--admin-text);
+}
+
+.page-title svg {
+    color: var(--admin-accent);
+}
+
+.page-subtitle {
+    margin: 0;
+    color: var(--admin-text-tertiary);
+    font-size: 0.9rem;
+}
+
+.page-actions {
+    display: flex;
+    gap: var(--space-md);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INVENTORY STATS CARDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.inventory-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.inv-stat-card {
+    position: relative;
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    overflow: hidden;
+    transition: var(--transition-fast);
+}
+
+.inv-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.inv-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.inv-total::before { background: var(--gradient-teal); }
+.inv-instock::before { background: var(--admin-success); }
+.inv-lowstock::before { background: var(--admin-warning); }
+.inv-outstock::before { background: var(--admin-danger); }
+
+.inv-stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.inv-total .inv-stat-icon {
+    background: var(--admin-accent-muted);
+    color: var(--admin-accent);
+}
+
+.inv-instock .inv-stat-icon {
+    background: var(--admin-success-bg);
+    color: var(--admin-success);
+}
+
+.inv-lowstock .inv-stat-icon {
+    background: var(--admin-warning-bg);
+    color: var(--admin-warning);
+}
+
+.inv-outstock .inv-stat-icon {
+    background: var(--admin-danger-bg);
+    color: var(--admin-danger);
+}
+
+.inv-stat-content {
+    flex: 1;
+}
+
+.inv-stat-value {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--admin-text);
+    line-height: 1.1;
+}
+
+.inv-stat-label {
+    font-size: 0.8rem;
+    color: var(--admin-text-tertiary);
+    font-weight: 500;
+}
+
+.inv-stat-trend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.trend-up {
+    background: var(--admin-success-bg);
+    color: var(--admin-success);
+}
+
+.inv-stat-badge {
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.badge-success {
+    background: var(--admin-success-bg);
+    color: var(--admin-success);
+}
+
+.badge-warning {
+    background: var(--admin-warning-bg);
+    color: var(--admin-warning);
+}
+
+.badge-danger {
+    background: var(--admin-danger-bg);
+    color: var(--admin-danger);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INVENTORY ALERT
+   ═══════════════════════════════════════════════════════════════════════════ */
+.inventory-alert {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-lg) var(--space-xl);
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b;
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.alert-icon {
+    width: 48px;
+    height: 48px;
+    background: #f59e0b;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-content strong {
+    display: block;
+    font-size: 1rem;
+    color: #92400e;
+    margin-bottom: 4px;
+}
+
+.alert-content p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #a16207;
+}
+
+.alert-action {
+    padding: var(--space-sm) var(--space-lg);
+    background: #f59e0b;
+    color: white;
+    border: none;
+    border-radius: var(--radius-full);
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.alert-action:hover {
+    background: #d97706;
+    transform: translateY(-2px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INVENTORY FILTERS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.inventory-filters {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    flex-wrap: wrap;
+}
+
+.filter-tabs {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.filter-tab {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--admin-surface);
+    border: 2px solid var(--admin-border);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--admin-text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.filter-tab:hover {
+    border-color: var(--admin-accent);
+    color: var(--admin-accent);
+}
+
+.filter-tab.active {
+    background: var(--admin-accent);
+    border-color: var(--admin-accent);
+    color: white;
+}
+
+.tab-icon {
+    display: flex;
+    align-items: center;
+}
+
+.tab-icon-success { color: var(--admin-success); }
+.tab-icon-warning { color: var(--admin-warning); }
+.tab-icon-danger { color: var(--admin-danger); }
+
+.filter-tab.active .tab-icon,
+.filter-tab.active .tab-icon-success,
+.filter-tab.active .tab-icon-warning,
+.filter-tab.active .tab-icon-danger {
+    color: white;
+}
+
+.tab-count {
+    padding: 2px 8px;
+    background: rgba(0,0,0,0.1);
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+}
+
+.filter-tab.active .tab-count {
+    background: rgba(255,255,255,0.2);
+}
+
+.filter-search {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--admin-surface);
+    border: 2px solid var(--admin-border);
+    border-radius: var(--radius-full);
+    transition: var(--transition-fast);
+}
+
+.filter-search:focus-within {
+    border-color: var(--admin-accent);
+    box-shadow: 0 0 0 4px var(--admin-accent-muted);
+}
+
+.filter-search svg {
+    color: var(--admin-text-muted);
+}
+
+.filter-search input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--admin-text);
+    font-size: 0.875rem;
+    width: 200px;
+}
+
+.filter-search input::placeholder {
+    color: var(--admin-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INVENTORY TABLE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.inventory-table-card {
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.inventory-table th {
+    padding: var(--space-md) var(--space-lg);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--admin-text-muted);
+    text-align: left;
+    background: var(--admin-surface-hover);
+    border-bottom: 2px solid var(--admin-border);
+}
+
+.inventory-table td {
+    padding: var(--space-md) var(--space-lg);
+    font-size: 0.875rem;
+    color: var(--admin-text);
+    border-bottom: 1px solid var(--admin-border);
+    vertical-align: middle;
+}
+
+.inventory-table tr:hover td {
+    background: var(--admin-accent-muted);
+}
+
+.inventory-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Row status styling */
+.row-lowstock td {
+    background: rgba(217, 119, 6, 0.04);
+}
+
+.row-lowstock:hover td {
+    background: rgba(217, 119, 6, 0.08);
+}
+
+.row-outstock td {
+    background: rgba(220, 38, 38, 0.04);
+}
+
+.row-outstock:hover td {
+    background: rgba(220, 38, 38, 0.08);
+}
+
+/* Product cell */
+.product-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.product-thumb {
+    width: 48px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--admin-accent-dark), var(--admin-accent));
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+}
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.product-name {
+    font-weight: 600;
+    color: var(--admin-text);
+}
+
+.product-author {
+    font-size: 0.8rem;
+    color: var(--admin-text-tertiary);
+}
+
+.product-id {
+    font-size: 0.7rem;
+    color: var(--admin-text-muted);
+    font-family: var(--font-mono);
+}
+
+.category-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--admin-accent-muted);
+    color: var(--admin-accent);
+    border-radius: var(--radius-full);
+}
+
+.price-value {
+    font-weight: 600;
+    color: var(--admin-success);
+    font-family: var(--font-mono);
+}
+
+/* Quantity control */
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.qty-btn {
+    width: 28px;
+    height: 28px;
+    background: var(--admin-surface-hover);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--admin-text-secondary);
+    transition: var(--transition-fast);
+}
+
+.qty-btn:hover {
+    background: var(--admin-accent);
+    border-color: var(--admin-accent);
+    color: white;
+}
+
+.qty-input {
+    width: 60px;
+    padding: 6px 8px;
+    text-align: center;
+    background: var(--admin-surface);
+    border: 2px solid var(--admin-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    color: var(--admin-text);
+    transition: var(--transition-fast);
+}
+
+.qty-input:focus {
+    outline: none;
+    border-color: var(--admin-accent);
+    box-shadow: 0 0 0 3px var(--admin-accent-muted);
+}
+
+.qty-input.changed {
+    border-color: var(--admin-coral);
+    background: rgba(249, 115, 22, 0.05);
+}
+
+.qty-input::-webkit-inner-spin-button,
+.qty-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Stock status */
+.stock-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-ok {
+    background: var(--admin-success-bg);
+    color: var(--admin-success);
+}
+
+.status-ok .status-dot {
+    background: var(--admin-success);
+}
+
+.status-low {
+    background: var(--admin-warning-bg);
+    color: var(--admin-warning);
+}
+
+.status-low .status-dot {
+    background: var(--admin-warning);
+    animation: blink 1s infinite;
+}
+
+.status-out {
+    background: var(--admin-danger-bg);
+    color: var(--admin-danger);
+}
+
+.status-out .status-dot {
+    background: var(--admin-danger);
+    animation: blink 0.5s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* Action buttons */
+.action-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    background: var(--admin-surface-hover);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--admin-text-secondary);
+    transition: var(--transition-fast);
+    text-decoration: none;
+}
+
+.action-btn:hover {
+    background: var(--admin-accent);
+    border-color: var(--admin-accent);
+    color: white;
+}
+
+.action-save {
+    background: var(--admin-success);
+    border-color: var(--admin-success);
+    color: white;
+}
+
+.action-save:hover {
+    background: #15803d;
+    border-color: #15803d;
+}
+
+.btn-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Empty state */
+.table-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-3xl);
+    text-align: center;
+    color: var(--admin-text-tertiary);
+}
+
+.table-empty svg {
+    margin-bottom: var(--space-lg);
+    opacity: 0.5;
+}
+
+.table-empty h3 {
+    margin: 0 0 var(--space-sm);
+    color: var(--admin-text);
+}
+
+.table-empty p {
+    margin: 0 0 var(--space-lg);
+}
+
+/* Pagination */
+.table-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg) var(--space-xl);
+    border-top: 1px solid var(--admin-border);
+}
+
+.pagination-info {
+    font-size: 0.875rem;
+    color: var(--admin-text-tertiary);
+}
+
+.pagination {
+    display: flex;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.page-item .page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 var(--space-md);
+    background: var(--admin-surface-hover);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-sm);
+    color: var(--admin-text-secondary);
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+.page-item .page-link:hover {
+    background: var(--admin-surface-elevated);
+    color: var(--admin-text);
+}
+
+.page-item.active .page-link {
+    background: var(--admin-accent);
+    border-color: var(--admin-accent);
+    color: white;
+}
+
+.page-item.disabled .page-link {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOAST NOTIFICATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.toast-container {
+    position: fixed;
+    bottom: var(--space-xl);
+    right: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    z-index: 9999;
+}
+
+.toast-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    min-width: 320px;
+    max-width: 400px;
+    transform: translateX(120%);
+    transition: transform 0.3s var(--ease-out);
+}
+
+.toast-item.show {
+    transform: translateX(0);
+}
+
+.toast-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.toast-success .toast-icon {
+    background: var(--admin-success-bg);
+    color: var(--admin-success);
+}
+
+.toast-error .toast-icon {
+    background: var(--admin-danger-bg);
+    color: var(--admin-danger);
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 700;
+    color: var(--admin-text);
+    margin-bottom: 2px;
+}
+
+.toast-message {
+    font-size: 0.875rem;
+    color: var(--admin-text-tertiary);
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--admin-text-muted);
+    padding: 4px;
+    transition: var(--transition-fast);
+}
+
+.toast-close:hover {
+    color: var(--admin-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HISTORY MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */
+.history-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s var(--ease-out);
+    padding: var(--space-lg);
+}
+
+.history-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.history-modal {
+    background: var(--admin-surface);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-lg);
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s var(--ease-out);
+}
+
+.history-modal-overlay.active .history-modal {
+    transform: scale(1) translateY(0);
+}
+
+.history-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg) var(--space-xl);
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.history-modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--admin-text);
+}
+
+.history-modal-header svg {
+    color: var(--admin-accent);
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    color: var(--admin-text-muted);
+    cursor: pointer;
+    padding: var(--space-sm);
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fast);
+}
+
+.close-modal:hover {
+    background: var(--admin-surface-hover);
+    color: var(--admin-text);
+}
+
+.history-book-info {
+    padding: var(--space-md) var(--space-xl);
+    background: var(--admin-surface-hover);
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.history-book-title {
+    font-weight: 600;
+    color: var(--admin-text);
+}
+
+.history-modal-body {
+    flex: 1;
+    padding: var(--space-lg) var(--space-xl);
+    overflow-y: auto;
+}
+
+.history-empty {
+    text-align: center;
+    padding: var(--space-2xl);
+    color: var(--admin-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1200px) {
+    .inventory-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .inventory-header {
+        flex-direction: column;
+    }
+
+    .page-actions {
+        width: 100%;
+    }
+
+    .page-actions .btn-admin {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .inventory-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .inventory-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-tabs {
+        justify-content: stretch;
+    }
+
+    .filter-tab {
+        flex: 1;
+        justify-content: center;
+        font-size: 0.8rem;
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    .filter-search {
+        width: 100%;
+    }
+
+    .filter-search input {
+        width: 100%;
+    }
+
+    .inventory-alert {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .alert-action {
+        width: 100%;
+    }
+
+    .quantity-control {
+        flex-wrap: wrap;
+    }
+
+    .toast-container {
+        left: var(--space-md);
+        right: var(--space-md);
+        bottom: var(--space-md);
+    }
+
+    .toast-item {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EXPORT MODAL - Premium Design
+   ═══════════════════════════════════════════════════════════════════════════ */
+.export-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.9) 100%);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: var(--space-md);
+    box-sizing: border-box;
+}
+
+.export-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.export-modal {
+    background: var(--admin-surface);
+    border-radius: var(--radius-xl);
+    width: calc(100% - 2rem);
+    max-width: 520px;
+    max-height: calc(100vh - 2rem);
+    display: flex;
+    flex-direction: column;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 25px 50px -12px rgba(0, 0, 0, 0.5),
+        0 0 100px rgba(13, 148, 136, 0.1);
+    transform: scale(0.9) translateY(30px);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.export-modal-overlay.active .export-modal {
+    transform: scale(1) translateY(0);
+}
+
+/* Modal Header */
+.export-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg);
+    background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 50%, #f5f5f4 100%);
+    border-bottom: 1px solid var(--admin-border);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.export-modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--admin-accent) 0%, var(--admin-accent-light) 50%, var(--admin-coral) 100%);
+}
+
+.export-modal-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    min-width: 0;
+}
+
+.export-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--admin-accent) 0%, var(--admin-accent-light) 100%);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+    box-shadow:
+        0 8px 24px rgba(13, 148, 136, 0.35),
+        inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 8px 24px rgba(13, 148, 136, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2); }
+    50% { box-shadow: 0 12px 32px rgba(13, 148, 136, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.2); }
+}
+
+.export-title-text h3 {
+    margin: 0 0 2px;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--admin-text);
+}
+
+.export-title-text p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--admin-text-tertiary);
+}
+
+.export-modal-close {
+    width: 36px;
+    height: 36px;
+    background: var(--admin-surface);
+    border: 2px solid var(--admin-border);
+    border-radius: var(--radius-md);
+    color: var(--admin-text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.export-modal-close:hover {
+    background: var(--admin-danger-bg);
+    border-color: var(--admin-danger);
+    color: var(--admin-danger);
+    transform: rotate(90deg);
+}
+
+/* Modal Body */
+.export-modal-body {
+    padding: var(--space-lg);
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Preview Stats */
+.export-preview-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+
+.preview-stat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--admin-surface-hover);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--admin-border);
+}
+
+.preview-stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.preview-stat-icon.stat-total {
+    background: var(--admin-accent-muted);
+    color: var(--admin-accent);
+}
+
+.preview-stat-icon.stat-success {
+    background: var(--admin-success-bg);
+    color: var(--admin-success);
+}
+
+.preview-stat-icon.stat-warning {
+    background: var(--admin-warning-bg);
+    color: var(--admin-warning);
+}
+
+.preview-stat-icon.stat-danger {
+    background: var(--admin-danger-bg);
+    color: var(--admin-danger);
+}
+
+.preview-stat-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.preview-stat-value {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--admin-text);
+    line-height: 1;
+}
+
+.preview-stat-label {
+    font-size: 0.65rem;
+    color: var(--admin-text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* Filter Section */
+.export-filter-section {
+    margin-bottom: var(--space-lg);
+}
+
+.export-filter-section h4 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--admin-text);
+    margin: 0 0 var(--space-sm);
+}
+
+.export-filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.filter-option {
+    display: block;
+    cursor: pointer;
+}
+
+.filter-option input {
+    display: none;
+}
+
+.filter-option-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--admin-surface);
+    border: 2px solid var(--admin-border);
+    border-radius: var(--radius-md);
+    transition: var(--transition-fast);
+}
+
+.filter-option:hover .filter-option-content {
+    border-color: var(--admin-accent);
+    background: var(--admin-accent-muted);
+}
+
+.filter-option.active .filter-option-content {
+    border-color: var(--admin-accent);
+    background: var(--admin-accent-muted);
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
+}
+
+.filter-icon {
+    width: 38px;
+    height: 38px;
+    background: var(--admin-accent-muted);
+    color: var(--admin-accent);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: var(--transition-fast);
+}
+
+.filter-icon-warning {
+    background: var(--admin-warning-bg);
+    color: var(--admin-warning);
+}
+
+.filter-icon-danger {
+    background: var(--admin-danger-bg);
+    color: var(--admin-danger);
+}
+
+.filter-option.active .filter-icon {
+    background: var(--admin-accent);
+    color: white;
+}
+
+.filter-option.active .filter-icon-warning {
+    background: var(--admin-warning);
+}
+
+.filter-option.active .filter-icon-danger {
+    background: var(--admin-danger);
+}
+
+.filter-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.filter-text strong {
+    font-size: 0.85rem;
+    color: var(--admin-text);
+}
+
+.filter-text small {
+    font-size: 0.7rem;
+    color: var(--admin-text-muted);
+}
+
+/* Features Section */
+.export-features {
+    background: linear-gradient(135deg, #f0fdfa 0%, #f5f5f4 100%);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+}
+
+.export-features h4 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--admin-text);
+    margin: 0 0 var(--space-sm);
+}
+
+.feature-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.8rem;
+    color: var(--admin-text-secondary);
+}
+
+.feature-item svg {
+    color: var(--admin-success);
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+}
+
+/* Modal Footer */
+.export-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--admin-surface-hover);
+    border-top: 1px solid var(--admin-border);
+    flex-shrink: 0;
+}
+
+.btn-export-cancel {
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--admin-surface);
+    border: 2px solid var(--admin-border);
+    border-radius: var(--radius-full);
+    color: var(--admin-text-secondary);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-export-cancel:hover {
+    background: var(--admin-surface-hover);
+    border-color: var(--admin-text-muted);
+    color: var(--admin-text);
+}
+
+.btn-export-download {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-lg);
+    background: linear-gradient(135deg, var(--admin-accent) 0%, var(--admin-accent-light) 100%);
+    border: none;
+    border-radius: var(--radius-full);
+    color: white;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    box-shadow: 0 4px 16px rgba(13, 148, 136, 0.3);
+}
+
+.btn-export-download:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(13, 148, 136, 0.4);
+}
+
+.btn-export-download:active {
+    transform: translateY(0);
+}
+
+/* Loading State */
+.export-loading {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition-fast);
+}
+
+.export-loading.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.export-loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.export-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--admin-border);
+    border-top-color: var(--admin-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.export-loading-content span {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--admin-text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .export-preview-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .export-modal-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-md);
+    }
+
+    .export-modal-close {
+        position: absolute;
+        top: var(--space-lg);
+        right: var(--space-lg);
+    }
+
+    .export-modal-footer {
+        flex-direction: column;
+    }
+
+    .btn-export-cancel,
+    .btn-export-download {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+</body>
+</html>

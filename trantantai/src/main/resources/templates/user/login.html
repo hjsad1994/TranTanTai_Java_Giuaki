@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập - BookHaven</title>
+    <th:block th:replace="~{layout::link-css}"></th:block>
+    <th:block th:replace="~{layout::custom-css}"></th:block>
+</head>
+<body class="d-flex flex-column min-vh-100">
+<th:block th:replace="~{layout::header}"></th:block>
+
+<main class="flex-grow-1 d-flex align-items-center">
+    <div class="container">
+        <div class="auth-container animate-fade-in-up">
+            <h2>Đăng Nhập</h2>
+
+            <!-- Success message after registration -->
+            <div th:if="${param.registered}" class="alert alert-success" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-check-circle me-2" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                    <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05"/>
+                </svg>
+                <strong>Thành công!</strong> Vui lòng đăng nhập với tài khoản của bạn.
+            </div>
+
+            <!-- Error message for failed login -->
+            <div th:if="${param.error}" class="alert alert-danger" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-exclamation-triangle me-2" viewBox="0 0 16 16">
+                    <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
+                    <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+                </svg>
+                <strong>Lỗi!</strong> Tên đăng nhập hoặc mật khẩu không chính xác.
+            </div>
+
+            <!-- Logout message -->
+            <div th:if="${param.logout}" class="alert alert-info" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-info-circle me-2" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                    <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                </svg>
+                Bạn đã đăng xuất thành công.
+            </div>
+
+            <form th:action="@{/login}" method="post">
+                <div class="mb-4">
+                    <label for="username" class="form-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person me-1" viewBox="0 0 16 16">
+                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+                        </svg>
+                        Tên đăng nhập <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="username" name="username"
+                           placeholder="Nhập tên đăng nhập" required autofocus>
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="form-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-lock me-1" viewBox="0 0 16 16">
+                            <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2M5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1"/>
+                        </svg>
+                        Mật khẩu <span class="text-danger">*</span>
+                    </label>
+                    <input type="password" class="form-control" id="password" name="password"
+                           placeholder="Nhập mật khẩu" required>
+                </div>
+                <div class="mb-4 form-check">
+                    <input type="checkbox" class="form-check-input" id="remember-me" name="remember-me">
+                    <label class="form-check-label" for="remember-me">Ghi nhớ đăng nhập</label>
+                </div>
+                <div class="d-grid gap-2 mb-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-box-arrow-in-right me-2" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"/>
+                            <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
+                        </svg>
+                        Đăng Nhập
+                    </button>
+                </div>
+            </form>
+
+            <!-- OAuth2 Login Separator -->
+            <div class="oauth-separator">
+                <span>hoặc tiếp tục với</span>
+            </div>
+
+            <!-- Google OAuth2 Login Button -->
+            <div class="d-grid mb-4">
+                <a href="/oauth2/authorization/google" class="btn btn-google btn-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M15.545 6.558a9.42 9.42 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.689 7.689 0 0 1 5.352 2.082l-2.284 2.284A4.347 4.347 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.792 4.792 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.702 3.702 0 0 0 1.599-2.431H8v-3.08h7.545z"/>
+                    </svg>
+                    Đăng nhập với Google
+                </a>
+            </div>
+
+            <div class="text-center">
+                <p style="color: var(--slate);">
+                    Chưa có tài khoản?
+                    <a th:href="@{/register}" class="fw-semibold">Đăng ký ngay</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{layout::footer}"></th:block>
+
+<!-- Debug Script - REMOVE AFTER DEBUGGING -->
+<script>
+(function() {
+    console.log('=== LOGIN PAGE DEBUG ===');
+    console.log('Page loaded at:', new Date().toISOString());
+    console.log('Document readyState:', document.readyState);
+    
+    // Check stylesheets
+    var sheets = document.styleSheets;
+    console.log('Total stylesheets:', sheets.length);
+    for (var i = 0; i < sheets.length; i++) {
+        try {
+            console.log('Stylesheet ' + i + ':', sheets[i].href || 'inline');
+        } catch(e) {
+            console.log('Stylesheet ' + i + ': (CORS blocked)', sheets[i].href);
+        }
+    }
+    
+    // Check form controls
+    var formControls = document.querySelectorAll('.form-control');
+    console.log('Form controls found:', formControls.length);
+    formControls.forEach(function(el, idx) {
+        var styles = window.getComputedStyle(el);
+        console.log('Input ' + idx + ' (' + el.id + '):', {
+            display: styles.display,
+            visibility: styles.visibility,
+            opacity: styles.opacity,
+            width: styles.width,
+            height: styles.height,
+            border: styles.border,
+            backgroundColor: styles.backgroundColor
+        });
+    });
+    
+    // Check if Bootstrap CSS is loaded
+    var testEl = document.createElement('div');
+    testEl.className = 'container';
+    document.body.appendChild(testEl);
+    var containerStyle = window.getComputedStyle(testEl);
+    console.log('Bootstrap loaded:', containerStyle.maxWidth !== 'none');
+    document.body.removeChild(testEl);
+    
+    // Check auth-container
+    var authContainer = document.querySelector('.auth-container');
+    if (authContainer) {
+        console.log('Auth container found:', authContainer.innerHTML.substring(0, 200) + '...');
+    } else {
+        console.log('Auth container NOT FOUND!');
+    }
+    
+    // Log all form elements
+    var form = document.querySelector('form');
+    if (form) {
+        console.log('Form found, action:', form.action);
+        console.log('Form innerHTML length:', form.innerHTML.length);
+    } else {
+        console.log('FORM NOT FOUND!');
+    }
+    
+    console.log('=== END DEBUG ===');
+})();
+</script>
+</body>
+</html>

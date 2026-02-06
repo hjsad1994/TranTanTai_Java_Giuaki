@@ -4,154 +4,969 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Danh Sách Sách - BookHaven</title>
+    <title>Kho Sách - BookHaven</title>
     <th:block th:replace="~{layout::link-css}"></th:block>
     <th:block th:replace="~{layout::custom-css}"></th:block>
+    <style>
+        /* ═══════════════════════════════════════════════════════════════════════════
+           BOOK STORE - Premium Card Grid Layout
+           ═══════════════════════════════════════════════════════════════════════════ */
+
+        .bookstore-hero {
+            background: linear-gradient(135deg, var(--teal-soft) 0%, var(--cloud) 50%, rgba(249, 115, 22, 0.05) 100%);
+            border-radius: 24px;
+            padding: 3rem 2rem;
+            margin-bottom: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bookstore-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--teal-muted) 0%, transparent 70%);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .bookstore-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.1) 0%, transparent 70%);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .bookstore-hero-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .bookstore-title {
+            font-family: var(--font-heading);
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .bookstore-title svg {
+            color: var(--teal);
+        }
+
+        .bookstore-subtitle {
+            color: var(--slate);
+            margin: 0.5rem 0 0;
+            font-size: 1rem;
+        }
+
+        .bookstore-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--teal);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--slate);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Search & Filter Bar */
+        .filter-bar {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--mist);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .filter-search {
+            flex: 1;
+            min-width: 280px;
+            position: relative;
+        }
+
+        .filter-search input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 3rem;
+            border: 2px solid var(--mist);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: var(--snow);
+        }
+
+        .filter-search input:focus {
+            outline: none;
+            border-color: var(--teal);
+            background: var(--white);
+            box-shadow: 0 0 0 4px var(--teal-muted);
+        }
+
+        .filter-search svg {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--slate);
+        }
+
+        .filter-sort {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-sort label {
+            font-size: 0.85rem;
+            color: var(--slate);
+            font-weight: 600;
+        }
+
+        .filter-sort select {
+            padding: 0.75rem 2.5rem 0.75rem 1rem;
+            border: 2px solid var(--mist);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            background: var(--snow);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-sort select:focus {
+            outline: none;
+            border-color: var(--teal);
+        }
+
+        .filter-view {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .view-btn {
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--mist);
+            border-radius: 10px;
+            background: var(--snow);
+            color: var(--slate);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .view-btn:hover,
+        .view-btn.active {
+            background: var(--teal);
+            border-color: var(--teal);
+            color: var(--white);
+        }
+
+        /* Category Quick Filters */
+        .category-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .category-chip {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: var(--white);
+            border: 2px solid var(--mist);
+            color: var(--graphite);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .category-chip:hover,
+        .category-chip.active {
+            background: var(--teal);
+            border-color: var(--teal);
+            color: var(--white);
+        }
+
+        .category-chip.all {
+            background: var(--ink);
+            border-color: var(--ink);
+            color: var(--white);
+        }
+
+        /* Book Cards Grid */
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .book-card-modern {
+            background: var(--white);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--mist);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .book-card-modern:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .book-card-cover {
+            position: relative;
+            height: 200px;
+            background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Actual book image from Cloudinary */
+        .book-card-image-modern {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+        }
+
+        .book-card-modern:hover .book-card-image-modern {
+            transform: scale(1.05);
+        }
+
+        .book-card-cover::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .book-card-visual {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .book-card-visual .book-icon {
+            width: 80px;
+            height: 100px;
+            background: var(--white);
+            border-radius: 4px 12px 12px 4px;
+            box-shadow: -4px 0 0 rgba(0,0,0,0.1), 0 8px 20px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .book-card-visual .book-icon::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 8px;
+            background: linear-gradient(to right, rgba(0,0,0,0.1), transparent);
+            border-radius: 4px 0 0 4px;
+        }
+
+        .book-card-visual .book-icon svg {
+            color: var(--teal);
+            opacity: 0.7;
+        }
+
+        .book-card-wishlist {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            z-index: 2;
+        }
+
+        .book-card-wishlist:hover {
+            background: var(--rose);
+            color: var(--white);
+            transform: scale(1.1);
+        }
+
+        .book-card-wishlist svg {
+            width: 18px;
+            height: 18px;
+            color: var(--rose);
+            transition: color 0.3s ease;
+        }
+
+        .book-card-wishlist:hover svg {
+            color: var(--white);
+        }
+
+        .book-card-body {
+            padding: 1.25rem;
+        }
+
+        .book-card-category {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            background: var(--teal-muted);
+            color: var(--teal-dark);
+            font-size: 0.7rem;
+            font-weight: 700;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 0.75rem;
+        }
+
+        .book-card-title {
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin: 0 0 0.5rem;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .book-card-title a {
+            color: inherit;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .book-card-title a:hover {
+            color: var(--teal);
+        }
+
+        .book-card-author {
+            font-size: 0.85rem;
+            color: var(--slate);
+            margin: 0 0 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .book-card-author svg {
+            width: 14px;
+            height: 14px;
+            opacity: 0.6;
+        }
+
+        .book-card-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--mist);
+        }
+
+        .book-card-price {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--coral);
+            white-space: nowrap;
+        }
+
+        .book-card-actions {
+            display: flex;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .book-card-actions .btn-view {
+            flex: 1;
+        }
+
+        .btn-cart {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--teal);
+            color: var(--white);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cart:hover:not(:disabled) {
+            background: var(--teal-dark);
+            transform: scale(1.05);
+        }
+
+        .btn-cart:disabled {
+            background: var(--pebble);
+            cursor: not-allowed;
+        }
+
+        .btn-view {
+            padding: 0.6rem 1rem;
+            background: var(--snow);
+            color: var(--graphite);
+            border: 2px solid var(--mist);
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-view:hover {
+            background: var(--ink);
+            border-color: var(--ink);
+            color: var(--white);
+        }
+
+        /* Admin Actions */
+        .admin-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed var(--mist);
+        }
+
+        .btn-admin {
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 8px;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-admin.edit {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--amber);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-admin.edit:hover {
+            background: var(--amber);
+            color: var(--white);
+        }
+
+        .btn-admin.delete {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+        }
+
+        .btn-admin.delete:hover {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        /* Pagination - Refined Floating Style */
+        .pagination-modern {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 2.5rem 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .pagination-modern .page-item {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .pagination-modern .page-link {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            background: var(--white);
+            border: 2px solid var(--mist);
+            color: var(--graphite);
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pagination-modern .page-link::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 0;
+        }
+
+        .pagination-modern .page-link:hover {
+            border-color: var(--teal);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13, 148, 136, 0.15);
+        }
+
+        .pagination-modern .page-link:hover::before {
+            opacity: 0.08;
+        }
+
+        .pagination-modern .page-link svg {
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s ease;
+        }
+
+        .pagination-modern .page-item:first-child .page-link:hover svg {
+            transform: translateX(-2px);
+        }
+
+        .pagination-modern .page-item:last-child .page-link:hover svg {
+            transform: translateX(2px);
+        }
+
+        .pagination-modern .page-item.active .page-link {
+            background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+            border-color: transparent;
+            color: var(--white);
+            box-shadow: 0 4px 15px rgba(13, 148, 136, 0.35);
+            transform: scale(1.05);
+        }
+
+        .pagination-modern .page-item.active .page-link::before {
+            display: none;
+        }
+
+        .pagination-modern .page-item.disabled .page-link {
+            background: var(--snow);
+            border-color: var(--mist);
+            color: var(--pebble);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .pagination-modern .page-item.disabled .page-link:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--snow);
+            border-radius: 20px;
+            border: 2px dashed var(--mist);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            color: var(--pebble);
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h3 {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: var(--slate);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Categories Link Section */
+        .categories-cta {
+            background: linear-gradient(135deg, var(--ink) 0%, var(--charcoal) 100%);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin: 3rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .categories-cta::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(13, 148, 136, 0.3) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .categories-cta-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .categories-cta h3 {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+            margin: 0 0 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .categories-cta h3 svg {
+            color: var(--teal-light);
+        }
+
+        .categories-cta p {
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0;
+        }
+
+        .btn-categories {
+            position: relative;
+            z-index: 1;
+            padding: 1rem 2rem;
+            background: var(--teal);
+            color: var(--white);
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 12px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-categories:hover {
+            background: var(--teal-light);
+            transform: translateX(4px);
+            color: var(--white);
+        }
+
+        /* Cart Animation */
+        .cart-badge-animate {
+            animation: cartPulse 0.3s ease;
+        }
+
+        @keyframes cartPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+            100% { transform: scale(1); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .bookstore-hero {
+                padding: 2rem 1.5rem;
+            }
+
+            .bookstore-title {
+                font-size: 1.75rem;
+            }
+
+            .bookstore-stats {
+                gap: 1.5rem;
+            }
+
+            .books-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 1rem;
+            }
+
+            .filter-bar {
+                padding: 1rem;
+            }
+
+            .filter-search {
+                min-width: 100%;
+            }
+
+            .categories-cta {
+                padding: 1.5rem;
+            }
+        }
+    </style>
 </head>
 <body class="d-flex flex-column min-vh-100">
 <th:block th:replace="~{layout::header}"></th:block>
 
 <main class="flex-grow-1">
     <div class="container animate-fade-in">
-        <!-- Page Header -->
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-            <h2 class="page-title mb-0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-book me-2" viewBox="0 0 16 16">
-                    <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783"/>
-                </svg>
-                Kho Sách
-            </h2>
-            <form class="d-flex search-form" th:action="@{/books/search}" method="get">
-                <input class="form-control" type="search"
-                       placeholder="Tìm kiếm sách..." aria-label="Tìm kiếm" name="keyword"
-                       style="min-width: 250px;">
-                <button class="btn btn-primary" type="submit">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
-                    </svg>
-                </button>
-            </form>
+        <!-- Hero Section -->
+        <div class="bookstore-hero">
+            <div class="bookstore-hero-content">
+                <div>
+                    <h1 class="bookstore-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783"/>
+                        </svg>
+                        Kho Sách BookHaven
+                    </h1>
+                    <p class="bookstore-subtitle">Khám phá hàng ngàn đầu sách hay từ nhiều thể loại khác nhau</p>
+                </div>
+                <div class="bookstore-stats" th:if="${totalBooks != null}">
+                    <div class="stat-item">
+                        <div class="stat-number" th:text="${totalBooks}">0</div>
+                        <div class="stat-label">Đầu Sách</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" th:text="${#lists.size(categories)}">0</div>
+                        <div class="stat-label">Thể Loại</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Books Table -->
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                <tr>
-                    <th>
-                        <a th:href="@{/books(pageNo=${currentPage}, sortBy='id')}">
-                            ID
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-arrow-down-up" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M11.5 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L11 2.707V14.5a.5.5 0 0 0 .5.5m-7-14a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V1.5a.5.5 0 0 1 .5-.5"/>
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <form class="filter-search" th:action="@{/books/search}" method="get">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                </svg>
+                <input type="text" name="keyword" placeholder="Tìm kiếm sách, tác giả..." />
+            </form>
+
+            <div class="filter-sort">
+                <label>Sắp xếp:</label>
+                <select id="sortSelect" onchange="window.location.href='/books?sortBy=' + this.value">
+                    <option value="id">Mặc định</option>
+                    <option value="title">Tên sách</option>
+                    <option value="author">Tác giả</option>
+                    <option value="price">Giá</option>
+                </select>
+            </div>
+
+            <div class="filter-view">
+                <button class="view-btn active" title="Dạng lưới">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Category Quick Filters -->
+        <div class="category-filters" th:if="${categories != null && !#lists.isEmpty(categories)}">
+            <a href="/books" class="category-chip all">Tất cả</a>
+            <a th:each="cat : ${categories}"
+               th:href="@{/books(category=${cat.id})}"
+               th:text="${cat.name}"
+               class="category-chip">Category</a>
+        </div>
+
+        <!-- Books Grid -->
+        <div class="books-grid stagger-animation" th:if="${books != null && !#lists.isEmpty(books)}">
+            <div class="book-card-modern" th:each="book : ${books}">
+                <!-- Book Cover -->
+                <div class="book-card-cover">
+                    <button class="book-card-wishlist" sec:authorize="isAuthenticated()" th:data-book-id="${book.id}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"/>
+                        </svg>
+                    </button>
+
+                    <!-- Show actual image if exists -->
+                    <img th:if="${book.imageUrls != null && !book.imageUrls.isEmpty()}"
+                         th:src="${book.imageUrls[0]}"
+                         th:alt="${book.title}"
+                         class="book-card-image-modern"/>
+                    <!-- Fallback: SVG icon when no image -->
+                    <div th:unless="${book.imageUrls != null && !book.imageUrls.isEmpty()}" class="book-card-visual">
+                        <div class="book-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z"/>
                             </svg>
-                        </a>
-                    </th>
-                    <th>
-                        <a th:href="@{/books(pageNo=${currentPage}, sortBy='title')}">
-                            Tên Sách
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-arrow-down-up" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M11.5 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L11 2.707V14.5a.5.5 0 0 0 .5.5m-7-14a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V1.5a.5.5 0 0 1 .5-.5"/>
-                            </svg>
-                        </a>
-                    </th>
-                    <th>
-                        <a th:href="@{/books(pageNo=${currentPage}, sortBy='author')}">
-                            Tác Giả
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-arrow-down-up" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M11.5 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L11 2.707V14.5a.5.5 0 0 0 .5.5m-7-14a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V1.5a.5.5 0 0 1 .5-.5"/>
-                            </svg>
-                        </a>
-                    </th>
-                    <th>
-                        <a th:href="@{/books(pageNo=${currentPage}, sortBy='price')}">
-                            Giá
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-arrow-down-up" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M11.5 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L11 2.707V14.5a.5.5 0 0 0 .5.5m-7-14a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V1.5a.5.5 0 0 1 .5-.5"/>
-                            </svg>
-                        </a>
-                    </th>
-                    <th>Danh Mục</th>
-                    <th>Thao Tác</th>
-                </tr>
-                </thead>
-                <tbody class="stagger-animation">
-                <tr th:each="book : ${books}">
-                    <td th:text="${book.getId()}"></td>
-                    <td class="book-title">
-                        <span th:text="${book.getTitle()}"></span>
-                        <span th:if="${book.quantity == 0}" class="badge-out-of-stock">Hết hàng</span>
-                    </td>
-                    <td class="book-author" th:text="${book.getAuthor()}"></td>
-                    <td class="book-price">
-                        <span th:text="${#numbers.formatDecimal(book.getPrice(), 0, 'COMMA', 0, 'POINT')}"></span>đ
-                    </td>
-                    <td>
-                        <span class="book-category" th:text="${book.getCategory() != null ? book.getCategory().getName() : 'Chưa phân loại'}"></span>
-                    </td>
-                    <td>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <span sec:authorize="hasRole('ADMIN')">
-                                <a class="btn btn-warning btn-sm" th:href="@{/books/edit/{id}(id=${book.getId()})}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-pencil me-1" viewBox="0 0 16 16">
-                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
-                                    </svg>
-                                    Sửa
-                                </a>
-                                <a class="btn btn-danger btn-sm" th:href="@{/books/delete/{id}(id=${book.getId()})}"
-                                   onclick="return confirm('Bạn có chắc muốn xóa sách này?')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash me-1" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                                    </svg>
-                                    Xóa
-                                </a>
-                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Book Body -->
+                <div class="book-card-body">
+                    <span class="book-card-category"
+                          th:text="${book.category != null ? book.category.name : 'Sách'}">Category</span>
+
+                    <h3 class="book-card-title">
+                        <a th:href="@{/book/{id}(id=${book.id})}" th:text="${book.title}">Book Title</a>
+                    </h3>
+
+                    <p class="book-card-author">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                        </svg>
+                        <span th:text="${book.author}">Author Name</span>
+                    </p>
+
+                    <div class="book-card-footer">
+                        <span class="book-card-price">
+                            <span th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')}">100,000</span>đ
+                        </span>
+
+                        <div class="book-card-actions">
+                            <a th:href="@{/book/{id}(id=${book.id})}" class="btn-view">Chi tiết</a>
+
                             <form sec:authorize="hasRole('USER')" th:action="@{/books/add-to-cart}" method="post" class="d-inline add-to-cart-form">
-                                <input type="hidden" name="id" th:value="${book.getId()}">
-                                <input type="hidden" name="name" th:value="${book.getTitle()}">
-                                <input type="hidden" name="price" th:value="${book.getPrice()}">
-                                <button type="submit" class="btn btn-success btn-sm add-to-cart-btn"
-                                        th:disabled="${book.quantity == 0}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-cart-plus me-1" viewBox="0 0 16 16">
+                                <input type="hidden" name="id" th:value="${book.id}">
+                                <input type="hidden" name="name" th:value="${book.title}">
+                                <input type="hidden" name="price" th:value="${book.price}">
+                                <button type="submit" class="btn-cart" th:disabled="${book.quantity == 0}" th:title="${book.quantity == 0 ? 'Hết hàng' : 'Thêm vào giỏ'}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                                         <path d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9z"/>
                                         <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zm3.915 10L3.102 4h10.796l-1.313 7zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
                                     </svg>
-                                    Thêm vào giỏ
                                 </button>
                             </form>
                         </div>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+                    </div>
+
+                    <!-- Admin Actions -->
+                    <div class="admin-actions" sec:authorize="hasRole('ADMIN')">
+                        <a th:href="@{/books/edit/{id}(id=${book.id})}" class="btn-admin edit">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207z"/>
+                            </svg>
+                            Sửa
+                        </a>
+                        <a th:href="@{/books/delete/{id}(id=${book.id})}" class="btn-admin delete"
+                           onclick="return confirm('Bạn có chắc muốn xóa sách này?')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                            </svg>
+                            Xóa
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" th:if="${books == null || #lists.isEmpty(books)}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M4.98 4a.5.5 0 0 0-.39.188L1.54 8H6a.5.5 0 0 1 .5.5 1.5 1.5 0 1 0 3 0A.5.5 0 0 1 10 8h4.46l-3.05-3.812A.5.5 0 0 0 11.02 4zm9.954 5H10.45a2.5 2.5 0 0 1-4.9 0H1.066l.32 2.562a.5.5 0 0 0 .497.438h12.234a.5.5 0 0 0 .496-.438zM3.809 3.563A1.5 1.5 0 0 1 4.981 3h6.038a1.5 1.5 0 0 1 1.172.563l3.7 4.625a.5.5 0 0 1 .105.374l-.39 3.124A1.5 1.5 0 0 1 14.117 13H1.883a1.5 1.5 0 0 1-1.489-1.314l-.39-3.124a.5.5 0 0 1 .106-.374z"/>
+            </svg>
+            <h3>Chưa có sách nào</h3>
+            <p>Kho sách đang được cập nhật. Vui lòng quay lại sau!</p>
         </div>
 
         <!-- Pagination -->
-        <nav aria-label="Phân trang" class="mt-4">
-            <ul class="pagination justify-content-center"
-                th:each="i : ${#numbers.sequence(0, totalPages)}">
-                <li class="page-item" th:classappend="${currentPage == i} ? 'active'">
-                    <a class="page-link" th:href="@{/books(pageNo=${i})}" th:text="${i + 1}"></a>
+        <nav aria-label="Phân trang" class="mt-4" th:if="${totalPages > 0}">
+            <ul class="pagination-modern">
+                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="page-link" th:href="@{/books(pageNo=${currentPage - 1})}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                        </svg>
+                    </a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages)}" th:classappend="${currentPage == i} ? 'active'">
+                    <a class="page-link" th:href="@{/books(pageNo=${i})}" th:text="${i + 1}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                    <a class="page-link" th:href="@{/books(pageNo=${currentPage + 1})}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                    </a>
                 </li>
             </ul>
         </nav>
 
-        <!-- Swagger API Documentation Link -->
-        <div class="swagger-link mt-5 mb-4">
-            <h4>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-file-earmark-code me-2" viewBox="0 0 16 16">
-                    <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
-                    <path d="M8.646 6.646a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L10.293 9 8.646 7.354a.5.5 0 0 1 0-.708m-1.292 0a.5.5 0 0 0-.708 0l-2 2a.5.5 0 0 0 0 .708l2 2a.5.5 0 0 0 .708-.708L5.707 9l1.647-1.646a.5.5 0 0 0 0-.708"/>
+        <!-- Categories CTA -->
+        <div class="categories-cta">
+            <div class="categories-cta-content">
+                <h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M3 2v4.586l7 7L14.586 9l-7-7zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586z"/>
+                        <path d="M5.5 5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+                    </svg>
+                    Khám Phá Theo Thể Loại
+                </h3>
+                <p>Tìm kiếm sách theo chủ đề yêu thích của bạn</p>
+            </div>
+            <a href="/categories" class="btn-categories">
+                Xem Tất Cả Thể Loại
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
                 </svg>
-                API Documentation
-            </h4>
-            <p class="text-muted">Khám phá và kiểm thử REST API với Swagger UI - giao diện tương tác đầy đủ</p>
-            <a href="/swagger-ui/index.html" class="btn btn-primary btn-lg" target="_blank">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-box-arrow-up-right me-2" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>
-                    <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/>
-                </svg>
-                Mở Swagger UI
             </a>
         </div>
     </div>
@@ -165,12 +980,12 @@ document.querySelectorAll('.add-to-cart-form').forEach(form => {
     form.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        const btn = this.querySelector('.add-to-cart-btn');
+        const btn = this.querySelector('.btn-cart');
         const originalHtml = btn.innerHTML;
 
         // Show loading state
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang thêm...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
         const formData = new FormData(this);
 
@@ -197,14 +1012,12 @@ document.querySelectorAll('.add-to-cart-form').forEach(form => {
                 }
 
                 // Show success feedback
-                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg>Đã thêm!';
-                btn.classList.remove('btn-success');
-                btn.classList.add('btn-outline-success');
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg>';
+                btn.style.background = 'var(--success)';
 
                 setTimeout(() => {
                     btn.innerHTML = originalHtml;
-                    btn.classList.remove('btn-outline-success');
-                    btn.classList.add('btn-success');
+                    btn.style.background = '';
                     btn.disabled = false;
                 }, 1500);
             }
@@ -217,28 +1030,57 @@ document.querySelectorAll('.add-to-cart-form').forEach(form => {
         });
     });
 });
+
+// Wishlist toggle AJAX
+document.querySelectorAll('.book-card-wishlist').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const bookId = this.dataset.bookId;
+        if (!bookId) return;
+
+        // Show loading state
+        this.style.pointerEvents = 'none';
+
+        fetch('/api/wishlist/' + bookId + '/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update wishlist badge in header
+                const wishlistBadge = document.getElementById('wishlistBadge');
+                if (wishlistBadge) {
+                    wishlistBadge.textContent = data.wishlistCount;
+                    wishlistBadge.classList.add('cart-badge-animate');
+                    setTimeout(() => wishlistBadge.classList.remove('cart-badge-animate'), 300);
+                }
+
+                // Toggle active state on button
+                if (data.inWishlist) {
+                    this.classList.add('active');
+                    this.style.background = 'var(--rose)';
+                    this.querySelector('svg').style.color = 'var(--white)';
+                } else {
+                    this.classList.remove('active');
+                    this.style.background = '';
+                    this.querySelector('svg').style.color = '';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra. Vui lòng thử lại!');
+        })
+        .finally(() => {
+            this.style.pointerEvents = '';
+        });
+    });
+});
 </script>
-
-<style>
-.cart-badge-animate {
-    animation: cartPulse 0.3s ease;
-}
-
-@keyframes cartPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.4); }
-    100% { transform: scale(1); }
-}
-
-.badge-out-of-stock {
-    display: inline-block;
-    padding: 2px 6px;
-    font-size: 0.7rem;
-    background: #fee2e2;
-    color: #dc2626;
-    border-radius: 4px;
-    margin-left: 8px;
-}
-</style>
 </body>
 </html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán MoMo - BookHaven</title>
+    <th:block th:replace="~{layout::link-css}"></th:block>
+    <th:block th:replace="~{layout::custom-css}"></th:block>
+    <style>
+        /* MoMo Payment Page Styles */
+        .momo-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: var(--space-xl) var(--space-lg);
+        }
+
+        .momo-header {
+            text-align: center;
+            margin-bottom: var(--space-2xl);
+        }
+
+        .momo-header::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(135deg, #ae2070 0%, #d63384 100%);
+            margin: var(--space-lg) auto 0;
+            border-radius: var(--radius-full);
+        }
+
+        .momo-title {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ae2070;
+            margin: 0 0 var(--space-sm) 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-md);
+        }
+
+        .momo-subtitle {
+            font-family: var(--font-body);
+            font-size: 1.1rem;
+            color: var(--slate);
+            margin: 0;
+        }
+
+        .momo-card {
+            background: var(--white);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-2xl);
+            box-shadow: var(--shadow-lg);
+            border: 2px solid #fce7f3;
+            text-align: center;
+        }
+
+        .payment-info {
+            margin-bottom: var(--space-xl);
+        }
+
+        .payment-amount {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ae2070;
+            margin: var(--space-md) 0;
+        }
+
+        .payment-amount span {
+            font-size: 1.2rem;
+            color: var(--slate);
+        }
+
+        .order-id {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            color: var(--slate);
+            background: var(--cloud);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            display: inline-block;
+        }
+
+        .instructions {
+            background: linear-gradient(135deg, #fdf2f8 0%, #fff 100%);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            margin: var(--space-xl) 0;
+            border-left: 4px solid #ae2070;
+            text-align: left;
+        }
+
+        .instructions h4 {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ae2070;
+            margin: 0 0 var(--space-md) 0;
+        }
+
+        .instructions ol {
+            margin: 0;
+            padding-left: var(--space-lg);
+            color: var(--graphite);
+        }
+
+        .instructions li {
+            margin-bottom: var(--space-sm);
+            line-height: 1.6;
+        }
+
+        .momo-actions {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+            margin-top: var(--space-xl);
+        }
+
+        .btn-momo {
+            width: 100%;
+            padding: var(--space-lg) var(--space-xl);
+            font-family: var(--font-body);
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: var(--radius-full);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            transition: all var(--transition-base);
+            text-decoration: none;
+        }
+
+        .btn-momo-primary {
+            background: linear-gradient(135deg, #ae2070 0%, #d63384 100%);
+            color: var(--white);
+            box-shadow: 0 4px 20px rgba(174, 32, 112, 0.3);
+        }
+
+        .btn-momo-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(174, 32, 112, 0.4);
+            color: var(--white);
+        }
+
+        .btn-momo-link {
+            background: transparent;
+            color: var(--slate);
+            padding: var(--space-md);
+        }
+
+        .btn-momo-link:hover {
+            color: #ae2070;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            padding: var(--space-md);
+            background: #fef3c7;
+            border-radius: var(--radius-lg);
+            margin-top: var(--space-lg);
+            color: #92400e;
+            font-weight: 600;
+        }
+
+        .status-indicator .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #fcd34d;
+            border-top-color: #f59e0b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .momo-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #ae2070 0%, #d63384 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .momo-title {
+                font-size: 1.5rem;
+            }
+
+            .payment-amount {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+<th:block th:replace="~{layout::header}"></th:block>
+
+<main class="flex-grow-1">
+    <div class="momo-container animate-fade-in">
+        <!-- Header -->
+        <div class="momo-header">
+            <h1 class="momo-title">
+                <div class="momo-logo">M</div>
+                Thanh toán MoMo
+            </h1>
+            <p class="momo-subtitle">Nhấn nút bên dưới để mở trang thanh toán MoMo</p>
+        </div>
+
+        <!-- Payment Card -->
+        <div class="momo-card">
+            <!-- Payment Info -->
+            <div class="payment-info">
+                <p style="margin: 0; color: var(--slate);">Số tiền thanh toán</p>
+                <p class="payment-amount">
+                    <span th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 0, 'POINT')}">0</span><span>đ</span>
+                </p>
+                <div class="order-id">
+                    Mã đơn hàng: <strong th:text="${orderId}">---</strong>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="instructions">
+                <h4>📱 Hướng dẫn thanh toán</h4>
+                <ol>
+                    <li>Nhấn nút <strong>"Thanh toán trên web MoMo"</strong> bên dưới</li>
+                    <li>Trang MoMo sẽ mở ra với mã QR để quét</li>
+                    <li>Mở ứng dụng <strong>MoMo</strong> trên điện thoại và quét mã</li>
+                    <li>Xác nhận thanh toán trong ứng dụng MoMo</li>
+                    <li>Trang này sẽ <strong>tự động cập nhật</strong> khi thanh toán thành công</li>
+                </ol>
+            </div>
+
+            <!-- Status Indicator -->
+            <div class="status-indicator" id="statusIndicator">
+                <div class="spinner"></div>
+                <span>Đang chờ thanh toán...</span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="momo-actions">
+                <!-- Open MoMo Web Payment Page -->
+                <a th:href="${payUrl}" class="btn-momo btn-momo-primary" target="_blank">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m7.5-6.923c-.67.204-1.335.82-1.887 1.855A8 8 0 0 0 5.145 4H7.5zM4.09 4a9.3 9.3 0 0 1 .64-1.539 7 7 0 0 1 .597-.933A7.03 7.03 0 0 0 2.255 4zm-.582 3.5c.03-.877.138-1.718.312-2.5H1.674a7 7 0 0 0-.656 2.5zM4.847 5a12.5 12.5 0 0 0-.338 2.5H7.5V5zM8.5 5v2.5h2.99a12.5 12.5 0 0 0-.337-2.5zM4.51 8.5a12.5 12.5 0 0 0 .337 2.5H7.5V8.5zm3.99 0V11h2.653c.187-.765.306-1.608.338-2.5zM5.145 12q.208.58.468 1.068c.552 1.035 1.218 1.65 1.887 1.855V12zm.182 2.472a7 7 0 0 1-.597-.933A9.3 9.3 0 0 1 4.09 12H2.255a7.02 7.02 0 0 0 3.072 2.472M3.82 11a13.7 13.7 0 0 1-.312-2.5h-2.49a7 7 0 0 0 .656 2.5zm6.853 3.472A7.02 7.02 0 0 0 13.745 12H11.91a9.3 9.3 0 0 1-.64 1.539 7 7 0 0 1-.597.933M8.5 12v2.923c.67-.204 1.335-.82 1.887-1.855q.26-.487.468-1.068zm3.68-1h2.146c.365-.767.594-1.61.656-2.5h-2.49a13.7 13.7 0 0 1-.312 2.5m2.802-3.5a7 7 0 0 0-.656-2.5H12.18c.174.782.282 1.623.312 2.5zM11.27 2.461c.247.464.462.98.64 1.539h1.835a7.02 7.02 0 0 0-3.072-2.472c.218.284.418.598.597.933M10.855 4a8 8 0 0 0-.468-1.068C9.835 1.897 9.17 1.282 8.5 1.077V4z"/>
+                    </svg>
+                    Thanh toán trên web MoMo
+                </a>
+                
+                <a href="/cart" class="btn-momo btn-momo-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+                    </svg>
+                    Hủy và quay lại giỏ hàng
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{layout::footer}"></th:block>
+
+<script th:inline="javascript">
+// Get data from Thymeleaf
+const orderId = /*[[${orderId}]]*/ '';
+
+// Auto-polling for payment status
+let pollInterval;
+let pollCount = 0;
+const maxPolls = 180; // 15 minutes max (180 * 5 seconds)
+
+function checkPaymentStatus() {
+    pollCount++;
+    
+    if (pollCount > maxPolls) {
+        clearInterval(pollInterval);
+        document.getElementById('statusIndicator').innerHTML = 
+            '<span style="color: #dc2626;">⚠️ Hết thời gian chờ. Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ.</span>';
+        return;
+    }
+    
+    fetch('/cart/check-payment-status/' + orderId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.paid) {
+                clearInterval(pollInterval);
+                document.getElementById('statusIndicator').innerHTML = 
+                    '<span style="color: #059669;">✅ Thanh toán thành công! Đang chuyển hướng...</span>';
+                setTimeout(() => {
+                    window.location.href = '/cart/momo-return?orderId=' + orderId;
+                }, 1500);
+            } else if (data.status === 'PAYMENT_FAILED') {
+                clearInterval(pollInterval);
+                document.getElementById('statusIndicator').innerHTML = 
+                    '<span style="color: #dc2626;">❌ Thanh toán thất bại. Vui lòng thử lại.</span>';
+            }
+        })
+        .catch(err => {
+            console.log('Polling error:', err);
+        });
+}
+
+// Start polling every 5 seconds
+pollInterval = setInterval(checkPaymentStatus, 5000);
+
+// Also check immediately after 1 second
+setTimeout(checkPaymentStatus, 1000);
+</script>
+</body>
+</html>

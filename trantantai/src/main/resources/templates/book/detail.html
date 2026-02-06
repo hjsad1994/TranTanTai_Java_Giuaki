@@ -29,7 +29,23 @@
                 <!-- Book Cover -->
                 <div class="col-lg-5">
                     <div class="book-cover-wrapper">
-                        <div class="book-cover-large">
+                        <!-- Show image gallery if book has images -->
+                        <div th:if="${book.imageUrls != null && !book.imageUrls.isEmpty()}" class="book-gallery">
+                            <div class="book-main-image-wrapper">
+                                <img id="mainBookImage" th:src="${book.imageUrls[0]}" th:alt="${book.title}" class="book-main-image"/>
+                            </div>
+                            <!-- Thumbnails row if multiple images -->
+                            <div th:if="${#lists.size(book.imageUrls) > 1}" class="book-thumbnails">
+                                <img th:each="url, iter : ${book.imageUrls}" 
+                                     th:src="${url}" 
+                                     th:alt="${book.title + ' - Ảnh ' + (iter.index + 1)}"
+                                     th:classappend="${iter.index == 0} ? 'active' : ''"
+                                     class="book-thumbnail"
+                                     onclick="setMainImage(this)"/>
+                            </div>
+                        </div>
+                        <!-- Fallback: CSS placeholder when no images -->
+                        <div th:unless="${book.imageUrls != null && !book.imageUrls.isEmpty()}" class="book-cover-large">
                             <div class="book-spine"></div>
                             <div class="book-front">
                                 <div class="book-cover-content">
@@ -46,7 +62,25 @@
                 <div class="col-lg-7">
                     <div class="book-info">
                         <span class="book-detail-category" th:text="${book.category != null ? book.category.name : 'Chưa phân loại'}">Category</span>
-                        <h1 class="book-detail-title" th:text="${book.title}">Tên Sách</h1>
+
+                        <!-- Title with Wishlist Button -->
+                        <div class="book-title-row">
+                            <h1 class="book-detail-title" th:text="${book.title}">Tên Sách</h1>
+                            <!-- Wishlist Heart Button - Floating Style -->
+                            <button sec:authorize="isAuthenticated()"
+                                    class="wishlist-heart-btn"
+                                    id="wishlistBtn"
+                                    th:data-book-id="${book.id}"
+                                    title="Thêm vào yêu thích">
+                                <svg class="heart-outline" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"/>
+                                </svg>
+                                <svg class="heart-filled" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314"/>
+                                </svg>
+                            </button>
+                        </div>
+
                         <p class="book-detail-author">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="me-2" viewBox="0 0 16 16">
                                 <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
@@ -107,15 +141,46 @@
                                 <input type="hidden" name="id" th:value="${book.id}">
                                 <input type="hidden" name="name" th:value="${book.title}">
                                 <input type="hidden" name="price" th:value="${book.price}">
-                                <button type="submit" class="btn btn-primary btn-lg add-to-cart-btn"
-                                        th:disabled="${book.quantity == 0}"
-                                        th:classappend="${book.quantity == 0} ? 'disabled'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
-                                        <path d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9z"/>
-                                        <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zm3.915 10L3.102 4h10.796l-1.313 7zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
-                                    </svg>
-                                    Thêm Vào Giỏ Hàng
-                                </button>
+                                <input type="hidden" name="quantity" id="quantityInput" value="1">
+
+                                <!-- Quantity Selector -->
+                                <div class="quantity-selector mb-3" th:if="${book.quantity > 0}">
+                                    <label class="quantity-label">Số lượng:</label>
+                                    <div class="quantity-control">
+                                        <button type="button" class="qty-btn qty-minus" onclick="adjustQty(-1)" th:disabled="${book.quantity == 0}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
+                                            </svg>
+                                        </button>
+                                        <span class="qty-display" id="qtyDisplay">1</span>
+                                        <button type="button" class="qty-btn qty-plus" onclick="adjustQty(1)" th:data-max="${book.quantity}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <span class="stock-info" th:text="'(Còn ' + ${book.quantity} + ' cuốn)'">Còn hàng</span>
+                                </div>
+
+                                <div class="action-buttons">
+                                    <button type="submit" class="btn btn-primary btn-lg add-to-cart-btn"
+                                            th:disabled="${book.quantity == 0}"
+                                            th:classappend="${book.quantity == 0} ? 'disabled'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                                            <path d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9z"/>
+                                            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zm3.915 10L3.102 4h10.796l-1.313 7zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                                        </svg>
+                                        Thêm Vào Giỏ Hàng
+                                    </button>
+                                    <a href="javascript:history.back()" class="back-button">
+                                        <span class="back-button-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+                                            </svg>
+                                        </span>
+                                        <span class="back-button-text">Quay lại</span>
+                                    </a>
+                                </div>
                             </form>
                             <a sec:authorize="isAnonymous()" href="/login" class="btn btn-primary btn-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
@@ -124,11 +189,14 @@
                                 </svg>
                                 Đăng Nhập Để Mua
                             </a>
-                            <a href="/" class="btn btn-outline-secondary btn-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
-                                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
-                                </svg>
-                                Quay Lại
+                            <!-- Back button for anonymous users -->
+                            <a sec:authorize="isAnonymous()" href="javascript:history.back()" class="back-button ms-3">
+                                <span class="back-button-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+                                    </svg>
+                                </span>
+                                <span class="back-button-text">Quay lại</span>
                             </a>
                         </div>
                     </div>
@@ -168,12 +236,290 @@
                 </div>
             </div>
         </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════════════════
+             BOOK REVIEWS & RATINGS SECTION
+             ═══════════════════════════════════════════════════════════════════════════ -->
+        <section class="reviews-section">
+            <div class="reviews-header">
+                <h2 class="reviews-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.56.56 0 0 0-.163-.505L1.71 6.745l4.052-.576a.53.53 0 0 0 .393-.288L8 2.223l1.847 3.658a.53.53 0 0 0 .393.288l4.052.575-2.906 2.77a.56.56 0 0 0-.163.506l.694 3.957-3.686-1.894a.5.5 0 0 0-.461 0z"/>
+                    </svg>
+                    Đánh Giá & Nhận Xét
+                </h2>
+                <div class="reviews-summary">
+                    <div class="summary-score">
+                        <span class="score-number" id="averageRating">0</span>
+                        <span class="score-max">/5</span>
+                    </div>
+                    <div class="summary-stars" id="summaryStars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                    </div>
+                    <span class="review-count">(<span id="totalReviews">0</span> đánh giá)</span>
+                </div>
+            </div>
+
+            <!-- Rating Breakdown -->
+            <div class="rating-breakdown">
+                <div class="breakdown-row">
+                    <span class="breakdown-label">5 sao</span>
+                    <div class="breakdown-bar">
+                        <div class="breakdown-fill" data-stars="5" style="width: 0%"></div>
+                    </div>
+                    <span class="breakdown-count" data-stars="5">0</span>
+                </div>
+                <div class="breakdown-row">
+                    <span class="breakdown-label">4 sao</span>
+                    <div class="breakdown-bar">
+                        <div class="breakdown-fill" data-stars="4" style="width: 0%"></div>
+                    </div>
+                    <span class="breakdown-count" data-stars="4">0</span>
+                </div>
+                <div class="breakdown-row">
+                    <span class="breakdown-label">3 sao</span>
+                    <div class="breakdown-bar">
+                        <div class="breakdown-fill" data-stars="3" style="width: 0%"></div>
+                    </div>
+                    <span class="breakdown-count" data-stars="3">0</span>
+                </div>
+                <div class="breakdown-row">
+                    <span class="breakdown-label">2 sao</span>
+                    <div class="breakdown-bar">
+                        <div class="breakdown-fill" data-stars="2" style="width: 0%"></div>
+                    </div>
+                    <span class="breakdown-count" data-stars="2">0</span>
+                </div>
+                <div class="breakdown-row">
+                    <span class="breakdown-label">1 sao</span>
+                    <div class="breakdown-bar">
+                        <div class="breakdown-fill" data-stars="1" style="width: 0%"></div>
+                    </div>
+                    <span class="breakdown-count" data-stars="1">0</span>
+                </div>
+            </div>
+
+            <!-- Review Form Container - Content loaded dynamically based on auth & purchase status -->
+            <div id="reviewFormContainer" sec:authorize="isAuthenticated()">
+                <!-- Loading state -->
+                <div id="reviewFormLoading" class="review-loading">
+                    <div class="loading-spinner"></div>
+                    <span>Đang kiểm tra...</span>
+                </div>
+
+                <!-- Already reviewed message -->
+                <div id="alreadyReviewedMsg" class="review-message review-message-success" style="display: none;">
+                    <div class="review-message-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                        </svg>
+                    </div>
+                    <div class="review-message-content">
+                        <p class="review-message-title">Bạn đã đánh giá sản phẩm này</p>
+                        <p class="review-message-text">Cảm ơn bạn đã chia sẻ nhận xét!</p>
+                    </div>
+                </div>
+
+                <!-- Purchase required message -->
+                <div id="purchaseRequiredMsg" class="review-message review-message-warning" style="display: none;">
+                    <div class="review-message-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                            <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+                        </svg>
+                    </div>
+                    <div class="review-message-content">
+                        <p class="review-message-title">Chưa thể đánh giá</p>
+                        <p class="review-message-text">Bạn cần mua và nhận sản phẩm này để có thể viết đánh giá.</p>
+                        <a href="/books" class="review-message-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+                            </svg>
+                            Mua sắm ngay
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Write Review Form -->
+                <div class="write-review-section" id="writeReviewSection" style="display: none;">
+                    <h3 class="write-review-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+                        </svg>
+                        Viết đánh giá của bạn
+                    </h3>
+                    <form class="review-form" id="reviewForm">
+                        <input type="hidden" name="bookId" id="reviewBookId" th:value="${book.id}">
+
+                        <!-- Star Rating Input -->
+                        <div class="rating-input-group">
+                            <label class="rating-input-label">Đánh giá sao:</label>
+                            <div class="star-rating-input" id="starRatingInput">
+                                <input type="radio" name="rating" value="5" id="star5">
+                                <label for="star5" class="star-label" data-value="5" title="Xuất sắc">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                                    </svg>
+                                </label>
+                                <input type="radio" name="rating" value="4" id="star4">
+                                <label for="star4" class="star-label" data-value="4" title="Tốt">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                                    </svg>
+                                </label>
+                                <input type="radio" name="rating" value="3" id="star3">
+                                <label for="star3" class="star-label" data-value="3" title="Bình thường">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                                    </svg>
+                                </label>
+                                <input type="radio" name="rating" value="2" id="star2">
+                                <label for="star2" class="star-label" data-value="2" title="Tệ">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                                    </svg>
+                                </label>
+                                <input type="radio" name="rating" value="1" id="star1">
+                                <label for="star1" class="star-label" data-value="1" title="Rất tệ">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                                    </svg>
+                                </label>
+                            </div>
+                            <span class="rating-text" id="ratingText">Chọn số sao</span>
+                        </div>
+
+                        <!-- Comment Input -->
+                        <div class="comment-input-group">
+                            <label class="comment-label" for="reviewComment">Nhận xét của bạn:</label>
+                            <textarea
+                                id="reviewComment"
+                                name="comment"
+                                class="comment-textarea"
+                                placeholder="Chia sẻ trải nghiệm của bạn về cuốn sách này..."
+                                rows="4"
+                                maxlength="500"
+                                required
+                            ></textarea>
+                            <div class="comment-footer">
+                                <span class="char-count"><span id="charCount">0</span>/500</span>
+                            </div>
+                        </div>
+
+                        <!-- Image Upload Section - Compact -->
+                        <div class="image-upload-compact">
+                            <div class="upload-row">
+                                <div class="upload-dropzone-mini" id="uploadDropzone">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+                                        <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1z"/>
+                                    </svg>
+                                    <span class="upload-text">Thêm ảnh</span>
+                                    <span class="upload-hint">(tối đa 3)</span>
+                                    <input type="file" id="imageInput" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden>
+                                    <div class="dropzone-hover-overlay">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <!-- Inline Preview Gallery -->
+                                <div class="image-preview-inline" id="imagePreviewGallery"></div>
+                            </div>
+                            <input type="hidden" id="uploadedImageUrls" name="imageUrls" value="">
+                        </div>
+
+                        <button type="submit" class="submit-review-btn" id="submitReviewBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
+                            </svg>
+                            <span class="btn-text">Gửi Đánh Giá</span>
+                            <span class="btn-loading" style="display: none;">
+                                <span class="spinner-small"></span>
+                                Đang gửi...
+                            </span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Login prompt for anonymous users -->
+            <div class="login-to-review" sec:authorize="isAnonymous()">
+                <div class="login-prompt-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+                    </svg>
+                </div>
+                <p class="login-prompt-text">Đăng nhập để viết đánh giá</p>
+                <a href="/login" class="login-prompt-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"/>
+                        <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
+                    </svg>
+                    Đăng Nhập
+                </a>
+            </div>
+
+            <!-- Reviews List -->
+            <div class="reviews-list" id="reviewsList">
+                <!-- Reviews will be loaded here dynamically -->
+                <div class="reviews-loading" id="reviewsLoading">
+                    <div class="loading-spinner"></div>
+                    <span>Đang tải đánh giá...</span>
+                </div>
+                <div class="no-reviews" id="noReviews" style="display: none;">
+                    <div class="no-reviews-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73z"/>
+                        </svg>
+                    </div>
+                    <p class="no-reviews-text">Chưa có đánh giá nào</p>
+                    <p class="no-reviews-subtext">Hãy là người đầu tiên đánh giá sách này!</p>
+                </div>
+            </div>
+
+            <!-- Load More Button -->
+            <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+                <button class="load-more-btn" id="loadMoreBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4"/>
+                    </svg>
+                    Xem thêm đánh giá
+                </button>
+            </div>
+        </section>
     </div>
 </main>
 
 <th:block th:replace="~{layout::footer}"></th:block>
 
-<script>
+<script th:inline="javascript">
+// Quantity adjustment function
+function adjustQty(delta) {
+    const display = document.getElementById('qtyDisplay');
+    const input = document.getElementById('quantityInput');
+    const plusBtn = document.querySelector('.qty-plus');
+    const maxQty = parseInt(plusBtn.dataset.max) || 1;
+    
+    let currentQty = parseInt(display.textContent) || 1;
+    let newQty = currentQty + delta;
+    
+    // Clamp between 1 and max
+    newQty = Math.max(1, Math.min(newQty, maxQty));
+    
+    display.textContent = newQty;
+    input.value = newQty;
+    
+    // Update button states
+    document.querySelector('.qty-minus').disabled = newQty <= 1;
+    plusBtn.disabled = newQty >= maxQty;
+}
+
 // Add to cart AJAX
 document.querySelectorAll('.add-to-cart-form').forEach(form => {
     form.addEventListener('submit', function(e) {
@@ -231,6 +577,876 @@ document.querySelectorAll('.add-to-cart-form').forEach(form => {
         });
     });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// REVIEWS SYSTEM - API Integration
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Configuration
+const bookId = /*[[${book.id}]]*/ '';
+const csrfToken = /*[[${_csrf.token}]]*/ '';
+const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+const isAuthenticated = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+let currentPage = 0;
+const pageSize = 10;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// IMAGE GALLERY - Switch main image on thumbnail click
+// ═══════════════════════════════════════════════════════════════════════════
+function setMainImage(thumbnail) {
+    const mainImage = document.getElementById('mainBookImage');
+    if (mainImage && thumbnail) {
+        mainImage.src = thumbnail.src;
+        // Update active state on thumbnails
+        document.querySelectorAll('.book-thumbnail').forEach(thumb => {
+            thumb.classList.remove('active');
+        });
+        thumbnail.classList.add('active');
+    }
+}
+
+// Initialize reviews on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initReviewSystem();
+    initWishlistButton();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// WISHLIST SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function initWishlistButton() {
+    const wishlistBtn = document.getElementById('wishlistBtn');
+    if (!wishlistBtn || !isAuthenticated) return;
+
+    // Check if book is in wishlist
+    try {
+        const response = await fetch(`/api/wishlist/${bookId}/check`, {
+            headers: {
+                [csrfHeader]: csrfToken
+            }
+        });
+        const data = await response.json();
+
+        if (data.inWishlist) {
+            wishlistBtn.classList.add('active');
+        }
+    } catch (error) {
+        console.error('Error checking wishlist:', error);
+    }
+
+    // Toggle wishlist on click
+    wishlistBtn.addEventListener('click', async function() {
+        const bookIdValue = this.dataset.bookId;
+
+        try {
+            this.disabled = true;
+            this.classList.add('loading');
+
+            const response = await fetch(`/api/wishlist/${bookIdValue}/toggle`, {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                if (data.inWishlist) {
+                    this.classList.add('active');
+                    this.classList.add('pulse');
+                    setTimeout(() => this.classList.remove('pulse'), 500);
+                } else {
+                    this.classList.remove('active');
+                }
+
+                // Update header wishlist badge
+                const headerBadge = document.getElementById('wishlistBadge');
+                if (headerBadge) {
+                    headerBadge.textContent = data.wishlistCount;
+                }
+            }
+        } catch (error) {
+            console.error('Error toggling wishlist:', error);
+        } finally {
+            this.disabled = false;
+            this.classList.remove('loading');
+        }
+    });
+}
+
+function initReviewSystem() {
+    if (!bookId) return;
+
+    // Load reviews and statistics from API
+    loadReviews(0);
+    loadStatistics();
+
+    // Check if user can review (only for authenticated users)
+    if (isAuthenticated) {
+        checkCanReview();
+    }
+
+    // Setup star rating input
+    setupStarRating();
+
+    // Setup character counter
+    setupCharCounter();
+
+    // Setup image upload
+    setupImageUpload();
+
+    // Setup form submission
+    setupReviewForm();
+
+    // Setup load more button
+    setupLoadMore();
+}
+
+// Check if current user can review
+async function checkCanReview() {
+    const reviewFormLoading = document.getElementById('reviewFormLoading');
+
+    try {
+        const response = await fetch(`/api/reviews/${bookId}/can-review`, {
+            headers: {
+                [csrfHeader]: csrfToken
+            }
+        });
+
+        // Hide loading
+        if (reviewFormLoading) reviewFormLoading.style.display = 'none';
+
+        if (response.status === 401) {
+            // Not authenticated - this shouldn't happen since we check isAuthenticated
+            return;
+        }
+
+        const data = await response.json();
+
+        const reviewForm = document.getElementById('writeReviewSection');
+        const alreadyReviewedMsg = document.getElementById('alreadyReviewedMsg');
+        const purchaseRequiredMsg = document.getElementById('purchaseRequiredMsg');
+
+        if (data.hasReviewed) {
+            // User already reviewed
+            if (reviewForm) reviewForm.style.display = 'none';
+            if (alreadyReviewedMsg) alreadyReviewedMsg.style.display = 'flex';
+            if (purchaseRequiredMsg) purchaseRequiredMsg.style.display = 'none';
+        } else if (!data.canReview) {
+            // User hasn't purchased
+            if (reviewForm) reviewForm.style.display = 'none';
+            if (alreadyReviewedMsg) alreadyReviewedMsg.style.display = 'none';
+            if (purchaseRequiredMsg) purchaseRequiredMsg.style.display = 'flex';
+        } else {
+            // User can review
+            if (reviewForm) reviewForm.style.display = 'block';
+            if (alreadyReviewedMsg) alreadyReviewedMsg.style.display = 'none';
+            if (purchaseRequiredMsg) purchaseRequiredMsg.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error checking review eligibility:', error);
+        // Hide loading even on error
+        if (reviewFormLoading) reviewFormLoading.style.display = 'none';
+    }
+}
+
+// Load reviews from API
+async function loadReviews(page = 0) {
+    const reviewsLoading = document.getElementById('reviewsLoading');
+    const reviewFormLoading = document.getElementById('reviewFormLoading');
+
+    try {
+        const response = await fetch(`/api/reviews/${bookId}?page=${page}&size=${pageSize}`);
+        const data = await response.json();
+
+        const reviewsList = document.getElementById('reviewsList');
+        const noReviews = document.getElementById('noReviews');
+        const loadMoreContainer = document.getElementById('loadMoreContainer');
+
+        // Hide loading state
+        if (reviewsLoading) reviewsLoading.style.display = 'none';
+        if (reviewFormLoading) reviewFormLoading.style.display = 'none';
+
+        if (page === 0) {
+            // Clear existing reviews for first page
+            const existingCards = reviewsList.querySelectorAll('.review-card');
+            existingCards.forEach(card => card.remove());
+        }
+
+        if (data.content && data.content.length > 0) {
+            if (noReviews) noReviews.style.display = 'none';
+
+            // Render reviews
+            data.content.forEach((review, index) => {
+                const card = createReviewCard(review, index);
+                reviewsList.appendChild(card);
+            });
+
+            // Show/hide load more button
+            if (loadMoreContainer) {
+                if (data.last) {
+                    loadMoreContainer.style.display = 'none';
+                } else {
+                    loadMoreContainer.style.display = 'block';
+                }
+            }
+        } else if (page === 0) {
+            if (noReviews) noReviews.style.display = 'block';
+            if (loadMoreContainer) loadMoreContainer.style.display = 'none';
+        }
+
+        currentPage = page;
+    } catch (error) {
+        console.error('Error loading reviews:', error);
+        // Hide loading even on error
+        if (reviewsLoading) reviewsLoading.style.display = 'none';
+        if (reviewFormLoading) reviewFormLoading.style.display = 'none';
+    }
+}
+
+// Load statistics from API
+async function loadStatistics() {
+    try {
+        const response = await fetch(`/api/reviews/${bookId}/statistics`);
+        const stats = await response.json();
+        
+        // Update average rating
+        const averageRating = document.getElementById('averageRating');
+        if (averageRating) {
+            averageRating.textContent = stats.averageRating.toFixed(1);
+        }
+        
+        // Update total reviews count
+        const totalReviews = document.getElementById('totalReviews');
+        if (totalReviews) {
+            totalReviews.textContent = stats.totalCount;
+        }
+        
+        // Update summary stars
+        updateSummaryStars(stats.averageRating);
+        
+        // Update breakdown bars
+        updateBreakdown(stats.countByStar || {}, stats.totalCount);
+    } catch (error) {
+        console.error('Error loading statistics:', error);
+    }
+}
+
+// Update summary stars display
+function updateSummaryStars(avg) {
+    const summaryStars = document.getElementById('summaryStars');
+    if (!summaryStars) return;
+    
+    const fullStars = Math.floor(avg);
+    const hasHalf = avg - fullStars >= 0.5;
+    let starsHtml = '';
+    
+    for (let i = 1; i <= 5; i++) {
+        if (i <= fullStars) {
+            starsHtml += '<span class="star filled">★</span>';
+        } else if (i === fullStars + 1 && hasHalf) {
+            starsHtml += '<span class="star half">★</span>';
+        } else {
+            starsHtml += '<span class="star">★</span>';
+        }
+    }
+    summaryStars.innerHTML = starsHtml;
+}
+
+// Update rating breakdown bars
+function updateBreakdown(countByStar, total) {
+    for (let stars = 1; stars <= 5; stars++) {
+        const fill = document.querySelector(`.breakdown-fill[data-stars="${stars}"]`);
+        const count = document.querySelector(`.breakdown-count[data-stars="${stars}"]`);
+        
+        const starCount = countByStar[stars] || 0;
+        
+        if (fill) {
+            const percentage = total > 0 ? (starCount / total * 100) : 0;
+            fill.style.width = percentage + '%';
+        }
+        if (count) {
+            count.textContent = starCount;
+        }
+    }
+}
+
+// Setup load more button
+function setupLoadMore() {
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function() {
+            loadReviews(currentPage + 1);
+        });
+    }
+}
+
+// Star Rating Input
+function setupStarRating() {
+    const starInputs = document.querySelectorAll('.star-rating-input input');
+    const ratingText = document.getElementById('ratingText');
+    const ratingTexts = {
+        1: 'Rất tệ',
+        2: 'Tệ',
+        3: 'Bình thường',
+        4: 'Tốt',
+        5: 'Xuất sắc!'
+    };
+
+    starInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const value = this.value;
+            if (ratingText) {
+                ratingText.textContent = ratingTexts[value];
+                ratingText.style.color = '#0d9488';
+            }
+        });
+    });
+}
+
+// Character Counter
+function setupCharCounter() {
+    const textarea = document.getElementById('reviewComment');
+    const charCount = document.getElementById('charCount');
+
+    if (textarea && charCount) {
+        textarea.addEventListener('input', function() {
+            charCount.textContent = this.value.length;
+            if (this.value.length >= 450) {
+                charCount.style.color = '#f97316';
+            } else {
+                charCount.style.color = '#78716c';
+            }
+        });
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// IMAGE UPLOAD SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════
+
+const MAX_IMAGES = 3;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+let uploadedImages = []; // Store {publicId, url, file} objects
+
+function setupImageUpload() {
+    const dropzone = document.getElementById('uploadDropzone');
+    const imageInput = document.getElementById('imageInput');
+    const gallery = document.getElementById('imagePreviewGallery');
+
+    if (!dropzone || !imageInput) return;
+
+    // Drag & Drop events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, () => {
+            dropzone.classList.add('dragover');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, () => {
+            dropzone.classList.remove('dragover');
+        });
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        const files = e.dataTransfer.files;
+        handleFiles(files);
+    });
+
+    // Click dropzone to open file browser
+    dropzone.addEventListener('click', (e) => {
+        if (e.target !== imageInput) {
+            imageInput.click();
+        }
+    });
+
+    // File input change
+    imageInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        e.target.value = ''; // Reset for re-selection
+    });
+}
+
+function handleFiles(files) {
+    const fileArray = Array.from(files);
+
+    // Check max images limit
+    if (uploadedImages.length + fileArray.length > MAX_IMAGES) {
+        showToast(`Chỉ được tải tối đa ${MAX_IMAGES} ảnh`, 'warning');
+        return;
+    }
+
+    fileArray.forEach(file => {
+        // Validate file type
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            showToast(`${file.name}: Định dạng không hỗ trợ`, 'warning');
+            return;
+        }
+
+        // Validate file size
+        if (file.size > MAX_FILE_SIZE) {
+            showToast(`${file.name}: Vượt quá 5MB`, 'warning');
+            return;
+        }
+
+        // Upload the file
+        uploadImage(file);
+    });
+}
+
+async function uploadImage(file) {
+    const gallery = document.getElementById('imagePreviewGallery');
+    const dropzone = document.getElementById('uploadDropzone');
+
+    // Create preview card with loading state
+    const previewId = 'preview-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const previewCard = createPreviewCard(file, previewId, true);
+    gallery.appendChild(previewCard);
+
+    // Update dropzone visibility
+    updateDropzoneVisibility();
+
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/api/v1/images/reviews', {
+            method: 'POST',
+            headers: {
+                [csrfHeader]: csrfToken
+            },
+            body: formData
+        });
+
+        if (response.status === 201) {
+            const data = await response.json();
+
+            // Update preview thumb to show success
+            const thumb = document.getElementById(previewId);
+            if (thumb) {
+                thumb.classList.remove('uploading');
+                thumb.classList.add('uploaded');
+                thumb.dataset.publicId = data.publicId;
+                thumb.dataset.url = data.url;
+
+                // Update image src with actual URL
+                const img = thumb.querySelector('img');
+                if (img) {
+                    img.src = data.url;
+                }
+
+                // Show delete button
+                const deleteBtn = thumb.querySelector('.thumb-delete');
+                if (deleteBtn) {
+                    deleteBtn.style.display = 'flex';
+                }
+            }
+
+            // Add to uploaded images array
+            uploadedImages.push({
+                id: previewId,
+                publicId: data.publicId,
+                url: data.url,
+                fileName: file.name
+            });
+
+            // Update hidden input
+            updateImageUrlsInput();
+
+            showToast('Tải ảnh thành công!', 'success');
+
+        } else {
+            const error = await response.json();
+            throw new Error(error.error || 'Upload failed');
+        }
+
+    } catch (error) {
+        console.error('Upload error:', error);
+
+        // Remove failed preview
+        const thumb = document.getElementById(previewId);
+        if (thumb) {
+            thumb.classList.add('removing');
+            setTimeout(() => {
+                thumb.remove();
+                updateDropzoneVisibility();
+            }, 300);
+        }
+
+        showToast(error.message || 'Không thể tải ảnh', 'warning');
+    }
+}
+
+function createPreviewCard(file, previewId, isLoading) {
+    const thumb = document.createElement('div');
+    thumb.className = 'preview-thumb' + (isLoading ? ' uploading' : '');
+    thumb.id = previewId;
+
+    // Create object URL for preview
+    const objectUrl = URL.createObjectURL(file);
+
+    thumb.innerHTML = `
+        <img src="${objectUrl}" alt="${escapeHtml(file.name)}" onload="URL.revokeObjectURL(this.src)">
+        <button type="button" class="thumb-delete" onclick="removeImage('${previewId}')" style="display: none;">×</button>
+    `;
+
+    return thumb;
+}
+
+async function removeImage(previewId) {
+    const thumb = document.getElementById(previewId);
+    if (!thumb) return;
+
+    const imageData = uploadedImages.find(img => img.id === previewId);
+
+    // Add removing animation
+    thumb.classList.add('removing');
+
+    // If image was uploaded to Cloudinary, delete it
+    if (imageData && imageData.publicId) {
+        try {
+            await fetch(`/api/v1/images/${encodeURIComponent(imageData.publicId)}`, {
+                method: 'DELETE',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            });
+        } catch (error) {
+            console.error('Error deleting image:', error);
+        }
+    }
+
+    // Remove from array
+    uploadedImages = uploadedImages.filter(img => img.id !== previewId);
+
+    // Remove thumb after animation
+    setTimeout(() => {
+        thumb.remove();
+        updateDropzoneVisibility();
+        updateImageUrlsInput();
+    }, 300);
+}
+
+function updateDropzoneVisibility() {
+    const dropzone = document.getElementById('uploadDropzone');
+
+    if (uploadedImages.length >= MAX_IMAGES) {
+        dropzone.style.display = 'none';
+    } else {
+        dropzone.style.display = 'inline-flex';
+    }
+}
+
+function updateImageUrlsInput() {
+    const input = document.getElementById('uploadedImageUrls');
+    if (input) {
+        const urls = uploadedImages.map(img => img.url).filter(Boolean);
+        input.value = JSON.stringify(urls);
+    }
+}
+
+// Clear all uploaded images (call when form submitted successfully)
+function clearUploadedImages() {
+    uploadedImages = [];
+    const gallery = document.getElementById('imagePreviewGallery');
+    if (gallery) {
+        gallery.innerHTML = '';
+    }
+    updateDropzoneVisibility();
+    updateImageUrlsInput();
+}
+
+// Review Form Submission - AJAX to API
+function setupReviewForm() {
+    const form = document.getElementById('reviewForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const rating = document.querySelector('input[name="rating"]:checked');
+        const comment = document.getElementById('reviewComment').value.trim();
+        const submitBtn = document.getElementById('submitReviewBtn');
+
+        if (!rating) {
+            showToast('Vui lòng chọn số sao đánh giá!', 'warning');
+            return;
+        }
+
+        if (!comment) {
+            showToast('Vui lòng nhập nhận xét của bạn!', 'warning');
+            return;
+        }
+
+        // Disable button and show loading
+        const originalBtnHtml = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
+
+        // Get uploaded image URLs
+        const imageUrls = uploadedImages.map(img => img.url).filter(Boolean);
+
+        try {
+            const response = await fetch('/api/reviews', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify({
+                    bookId: bookId,
+                    rating: parseInt(rating.value),
+                    comment: comment,
+                    imageUrls: imageUrls
+                })
+            });
+
+            if (response.status === 201) {
+                // Success - review created
+                const review = await response.json();
+
+                // Prepend new review to list
+                prependReviewCard(review);
+
+                // Reset form
+                form.reset();
+                const ratingText = document.getElementById('ratingText');
+                if (ratingText) {
+                    ratingText.textContent = 'Chọn số sao';
+                    ratingText.style.color = '#78716c';
+                }
+                const charCount = document.getElementById('charCount');
+                if (charCount) charCount.textContent = '0';
+
+                // Clear uploaded images
+                clearUploadedImages();
+
+                showToast('Cảm ơn bạn đã đánh giá!', 'success');
+
+                // Reload statistics
+                loadStatistics();
+
+                // Re-check can review (will hide form)
+                checkCanReview();
+
+            } else if (response.status === 403) {
+                showToast('Bạn cần mua sản phẩm này để đánh giá', 'warning');
+            } else if (response.status === 409) {
+                showToast('Bạn đã đánh giá sản phẩm này rồi', 'warning');
+                checkCanReview(); // Update UI state
+            } else if (response.status === 401) {
+                showToast('Vui lòng đăng nhập để đánh giá', 'warning');
+            } else {
+                const error = await response.json();
+                showToast(error.error || 'Có lỗi xảy ra', 'warning');
+            }
+        } catch (error) {
+            console.error('Error submitting review:', error);
+            showToast('Có lỗi xảy ra. Vui lòng thử lại!', 'warning');
+        } finally {
+            // Restore button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
+        }
+    });
+}
+
+// Prepend new review to list
+function prependReviewCard(review) {
+    const reviewsList = document.getElementById('reviewsList');
+    const noReviews = document.getElementById('noReviews');
+    
+    if (noReviews) noReviews.style.display = 'none';
+    
+    const card = createReviewCard(review, 0);
+    
+    // Insert at beginning after removing no-reviews placeholder display
+    const firstCard = reviewsList.querySelector('.review-card');
+    if (firstCard) {
+        reviewsList.insertBefore(card, firstCard);
+    } else {
+        reviewsList.appendChild(card);
+    }
+}
+
+// Create review card element
+function createReviewCard(review, index) {
+    const card = document.createElement('div');
+    card.className = 'review-card';
+    card.style.animationDelay = `${index * 0.1}s`;
+
+    const stars = generateStars(review.rating);
+    const formattedDate = formatDate(review.createdAt);
+    const userInitial = review.userInitial || (review.username ? review.username.charAt(0).toUpperCase() : '?');
+    const username = review.username || 'Anonymous';
+
+    // Generate image gallery HTML if images exist
+    let imagesHtml = '';
+    if (review.imageUrls && review.imageUrls.length > 0) {
+        imagesHtml = `
+            <div class="review-images">
+                ${review.imageUrls.map((url, idx) => `
+                    <div class="review-image-thumb" onclick="openImageLightbox('${escapeHtml(url)}')">
+                        <img src="${escapeHtml(url)}" alt="Review image ${idx + 1}" loading="lazy">
+                        <div class="review-image-overlay">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+                                <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2zm13 1a.5.5 0 0 1 .5.5v6l-3.775-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12v.54L1 12.5v-9a.5.5 0 0 1 .5-.5z"/>
+                            </svg>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    card.innerHTML = `
+        <div class="review-header">
+            <div class="reviewer-info">
+                <div class="reviewer-avatar">${escapeHtml(userInitial)}</div>
+                <div class="reviewer-details">
+                    <span class="reviewer-name">${escapeHtml(username)}</span>
+                    <span class="review-date">${formattedDate}</span>
+                </div>
+            </div>
+            <div class="review-rating">${stars}</div>
+        </div>
+        <p class="review-content">${escapeHtml(review.comment)}</p>
+        ${imagesHtml}
+    `;
+
+    return card;
+}
+
+// Open image in lightbox
+function openImageLightbox(imageUrl) {
+    // Remove existing lightbox if any
+    const existingLightbox = document.querySelector('.image-lightbox');
+    if (existingLightbox) existingLightbox.remove();
+
+    const lightbox = document.createElement('div');
+    lightbox.className = 'image-lightbox';
+    lightbox.innerHTML = `
+        <div class="lightbox-backdrop" onclick="closeLightbox()"></div>
+        <div class="lightbox-content">
+            <img src="${escapeHtml(imageUrl)}" alt="Review image">
+            <button class="lightbox-close" onclick="closeLightbox()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                </svg>
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(lightbox);
+    document.body.style.overflow = 'hidden';
+
+    // Animate in
+    requestAnimationFrame(() => {
+        lightbox.classList.add('show');
+    });
+
+    // Close on escape key
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            closeLightbox();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+}
+
+function closeLightbox() {
+    const lightbox = document.querySelector('.image-lightbox');
+    if (lightbox) {
+        lightbox.classList.remove('show');
+        setTimeout(() => {
+            lightbox.remove();
+            document.body.style.overflow = '';
+        }, 300);
+    }
+}
+
+// Generate star HTML
+function generateStars(rating) {
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+        html += `<span class="star ${i <= rating ? 'filled' : ''}">★</span>`;
+    }
+    return html;
+}
+
+// Format date
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now - date;
+
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Vừa xong';
+    if (minutes < 60) return `${minutes} phút trước`;
+    if (hours < 24) return `${hours} giờ trước`;
+    if (days < 7) return `${days} ngày trước`;
+
+    return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Toast notification
+function showToast(message, type = 'info') {
+    // Remove existing toast
+    const existingToast = document.querySelector('.review-toast');
+    if (existingToast) existingToast.remove();
+
+    const toast = document.createElement('div');
+    toast.className = `review-toast review-toast-${type}`;
+    toast.innerHTML = `
+        <span class="toast-icon">
+            ${type === 'success' ? '✓' : type === 'warning' ? '!' : 'ℹ'}
+        </span>
+        <span class="toast-message">${message}</span>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    // Remove after delay
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
 </script>
 
 <style>
@@ -242,6 +1458,73 @@ document.querySelectorAll('.add-to-cart-form').forEach(form => {
     0% { transform: scale(1); }
     50% { transform: scale(1.4); }
     100% { transform: scale(1); }
+}
+
+/* Quantity Selector Styles */
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.quantity-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.95rem;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: #f3f4f6;
+    border-radius: 0.75rem;
+    padding: 0.25rem;
+}
+
+.qty-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: white;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #374151;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.qty-btn:hover:not(:disabled) {
+    background: #14b8a6;
+    color: white;
+    transform: scale(1.05);
+}
+
+.qty-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.qty-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.qty-display {
+    min-width: 50px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1f2937;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.stock-info {
+    font-size: 0.85rem;
+    color: #6b7280;
 }
 
 /* Stock status badges */
@@ -274,6 +1557,1255 @@ document.querySelectorAll('.add-to-cart-form').forEach(form => {
 
 .btn:disabled:hover {
     opacity: 0.5;
+}
+
+/* Back Button Styles */
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 2px solid #cbd5e1;
+    border-radius: 50px;
+    color: #475569;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.back-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(20, 184, 166, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.back-button:hover::before {
+    left: 100%;
+}
+
+.back-button:hover {
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    border-color: #0d9488;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(20, 184, 166, 0.35);
+}
+
+.back-button-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.back-button:hover .back-button-icon {
+    transform: translateX(-4px);
+}
+
+.back-button-text {
+    letter-spacing: 0.025em;
+}
+
+.back-button:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Action Buttons Container */
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REVIEWS SECTION STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.reviews-section {
+    margin-top: 3rem;
+    padding: 2.5rem;
+    background: #ffffff;
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e7e5e4;
+}
+
+/* Reviews Header */
+.reviews-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #e7e5e4;
+}
+
+.reviews-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1c1917;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+}
+
+.reviews-title svg {
+    color: #0d9488;
+}
+
+.reviews-summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.summary-score {
+    display: flex;
+    align-items: baseline;
+    gap: 0.125rem;
+}
+
+.score-number {
+    font-family: 'Nunito', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #0d9488;
+    line-height: 1;
+}
+
+.score-max {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #a8a29e;
+}
+
+.summary-stars {
+    display: flex;
+    gap: 0.125rem;
+}
+
+.summary-stars .star {
+    font-size: 1.5rem;
+    color: #d6d3d1;
+    transition: color 0.2s ease;
+}
+
+.summary-stars .star.filled {
+    color: #f59e0b;
+}
+
+.summary-stars .star.half {
+    background: linear-gradient(90deg, #f59e0b 50%, #d6d3d1 50%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.review-count {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    color: #78716c;
+}
+
+/* Rating Breakdown */
+.rating-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    margin-bottom: 2rem;
+    padding: 1.25rem;
+    background: #fafafa;
+    border-radius: 1rem;
+}
+
+.breakdown-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.breakdown-label {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #44403c;
+    min-width: 50px;
+}
+
+.breakdown-bar {
+    flex: 1;
+    height: 10px;
+    background: #e7e5e4;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.breakdown-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0d9488 0%, #14b8a6 100%);
+    border-radius: 999px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.breakdown-count {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #78716c;
+    min-width: 30px;
+    text-align: right;
+}
+
+/* Write Review Section */
+.write-review-section {
+    margin-bottom: 2rem;
+    padding: 1.75rem;
+    background: linear-gradient(135deg, #f0fdfa 0%, #f5f5f4 100%);
+    border-radius: 1.25rem;
+    border: 2px solid rgba(13, 148, 136, 0.15);
+}
+
+.write-review-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1c1917;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1.5rem 0;
+}
+
+.write-review-title svg {
+    color: #0d9488;
+}
+
+/* Star Rating Input */
+.rating-input-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.rating-input-label {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.star-rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 0.25rem;
+}
+
+.star-rating-input input {
+    display: none;
+}
+
+.star-label {
+    cursor: pointer;
+    color: #d6d3d1;
+    transition: all 0.2s ease;
+}
+
+.star-label:hover,
+.star-label:hover ~ .star-label,
+.star-rating-input input:checked ~ .star-label {
+    color: #f59e0b;
+    transform: scale(1.1);
+}
+
+.star-label:active {
+    transform: scale(0.95);
+}
+
+.rating-text {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    color: #78716c;
+    font-style: italic;
+}
+
+/* Comment Input */
+.comment-input-group {
+    margin-bottom: 1.25rem;
+}
+
+.comment-label {
+    display: block;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.comment-textarea {
+    width: 100%;
+    padding: 1rem;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    color: #1c1917;
+    background: #ffffff;
+    border: 2px solid #e7e5e4;
+    border-radius: 0.75rem;
+    resize: vertical;
+    min-height: 100px;
+    transition: all 0.3s ease;
+}
+
+.comment-textarea:focus {
+    outline: none;
+    border-color: #0d9488;
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
+}
+
+.comment-textarea::placeholder {
+    color: #a8a29e;
+}
+
+.comment-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+}
+
+.char-count {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.8rem;
+    color: #78716c;
+}
+
+/* Submit Button */
+.submit-review-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.75rem;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3);
+}
+
+.submit-review-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4);
+}
+
+.submit-review-btn:active {
+    transform: translateY(0);
+}
+
+.submit-review-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Login Prompt */
+.login-to-review {
+    text-align: center;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #f5f5f4 0%, #fafafa 100%);
+    border-radius: 1.25rem;
+    border: 2px dashed #d6d3d1;
+}
+
+.login-prompt-icon {
+    color: #a8a29e;
+    margin-bottom: 1rem;
+}
+
+.login-prompt-text {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #44403c;
+    margin: 0 0 1rem 0;
+}
+
+.login-prompt-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+    border-radius: 999px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(13, 148, 136, 0.25);
+}
+
+.login-prompt-btn:hover {
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(13, 148, 136, 0.35);
+}
+
+/* Reviews List */
+.reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Individual Review Card */
+.review-card {
+    padding: 1.5rem;
+    background: #ffffff;
+    border-radius: 1rem;
+    border: 1px solid #e7e5e4;
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+.review-card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border-color: rgba(13, 148, 136, 0.2);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.reviewer-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.reviewer-avatar {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.reviewer-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.reviewer-name {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1c1917;
+}
+
+.review-date {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.8rem;
+    color: #78716c;
+}
+
+.review-rating {
+    display: flex;
+    gap: 0.125rem;
+}
+
+.review-rating .star {
+    font-size: 1rem;
+    color: #d6d3d1;
+}
+
+.review-rating .star.filled {
+    color: #f59e0b;
+}
+
+.review-content {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #44403c;
+    margin: 0;
+}
+
+/* No Reviews State */
+.no-reviews {
+    text-align: center;
+    padding: 3rem;
+}
+
+.no-reviews-icon {
+    color: #d6d3d1;
+    margin-bottom: 1rem;
+}
+
+.no-reviews-text {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #78716c;
+    margin: 0 0 0.5rem 0;
+}
+
+.no-reviews-subtext {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    color: #a8a29e;
+    margin: 0;
+}
+
+/* Load More Button */
+.load-more-container {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.load-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0d9488;
+    background: #ffffff;
+    border: 2px solid #0d9488;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.load-more-btn:hover {
+    color: #ffffff;
+    background: #0d9488;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .reviews-section {
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .reviews-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .reviews-title {
+        font-size: 1.25rem;
+    }
+
+    .score-number {
+        font-size: 2rem;
+    }
+
+    .rating-input-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .star-label svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .write-review-section {
+        padding: 1.25rem;
+    }
+
+    .review-header {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .review-card {
+        padding: 1.25rem;
+    }
+}
+
+/* Toast Notifications */
+.review-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: #1c1917;
+    color: #ffffff;
+    border-radius: 999px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Nunito', sans-serif;
+}
+
+.review-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.review-toast-success {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+}
+
+.review-toast-warning {
+    background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+}
+
+.toast-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.toast-message {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REVIEW MESSAGES & LOADING STATES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Loading States */
+.review-loading,
+.reviews-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2.5rem;
+    color: #78716c;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+}
+
+.loading-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid #e7e5e4;
+    border-top-color: #0d9488;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.spinner-small {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Review Messages (Already Reviewed / Purchase Required / Success) */
+.review-message {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    border-radius: 1rem;
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+.review-message-success {
+    background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+    border: 2px solid #14b8a6;
+}
+
+.review-message-warning {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 2px solid #f59e0b;
+}
+
+.review-message-icon {
+    flex-shrink: 0;
+}
+
+.review-message-success .review-message-icon svg {
+    color: #0d9488;
+}
+
+.review-message-warning .review-message-icon svg {
+    color: #d97706;
+}
+
+.review-message-content {
+    flex: 1;
+}
+
+.review-message-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem 0;
+}
+
+.review-message-success .review-message-title {
+    color: #0f766e;
+}
+
+.review-message-warning .review-message-title {
+    color: #92400e;
+}
+
+.review-message-text {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.review-message-success .review-message-text {
+    color: #115e59;
+}
+
+.review-message-warning .review-message-text {
+    color: #78350f;
+}
+
+.review-message-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 1rem;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+    border-radius: 999px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+}
+
+.review-message-btn:hover {
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+}
+
+/* Responsive adjustments for messages */
+@media (max-width: 576px) {
+    .review-message {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+    }
+
+    .review-message-icon svg {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   IMAGE UPLOAD - Compact Inline Style
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.image-upload-compact {
+    margin-bottom: 1.25rem;
+}
+
+.upload-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* Mini Dropzone Button */
+.upload-dropzone-mini {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #f8fafc;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 0.625rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+}
+
+.upload-dropzone-mini:hover {
+    border-color: #14b8a6;
+    background: #f0fdfa;
+    border-style: solid;
+}
+
+.upload-dropzone-mini.dragover {
+    border-color: #0d9488;
+    background: #ccfbf1;
+    transform: scale(1.02);
+}
+
+.upload-dropzone-mini svg {
+    color: #64748b;
+    transition: color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.upload-dropzone-mini:hover svg {
+    color: #0d9488;
+}
+
+.upload-text {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.upload-hint {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+/* Hover overlay for drag */
+.dropzone-hover-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(13, 148, 136, 0.9);
+    border-radius: 0.5rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+}
+
+.dropzone-hover-overlay svg {
+    color: #ffffff !important;
+}
+
+.upload-dropzone-mini.dragover .dropzone-hover-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Inline Preview Gallery */
+.image-preview-inline {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+}
+
+.preview-thumb {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 3px 8px rgba(0, 0, 0, 0.08);
+    animation: thumbIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.preview-thumb:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2), 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes thumbIn {
+    from {
+        opacity: 0;
+        transform: scale(0.7);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.preview-thumb.removing {
+    animation: thumbOut 0.25s ease forwards;
+}
+
+@keyframes thumbOut {
+    to {
+        opacity: 0;
+        transform: scale(0.7);
+    }
+}
+
+.preview-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Loading state */
+.preview-thumb.uploading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(2px);
+}
+
+.preview-thumb.uploading::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #0d9488;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    z-index: 2;
+}
+
+/* Success indicator */
+.preview-thumb.uploaded::after {
+    content: '✓';
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+    animation: checkPop 0.3s ease;
+}
+
+@keyframes checkPop {
+    from { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    to { transform: scale(1); }
+}
+
+/* Delete button */
+.preview-thumb .thumb-delete {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
+}
+
+.preview-thumb:hover .thumb-delete {
+    opacity: 1;
+}
+
+.preview-thumb .thumb-delete:hover {
+    background: #dc2626;
+    transform: scale(1.15);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REVIEW IMAGES DISPLAY
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.review-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.review-image-thumb {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    border-radius: 1rem;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.review-image-thumb:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+}
+
+.review-image-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.review-image-thumb:hover img {
+    transform: scale(1.08);
+}
+
+.review-image-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(13, 148, 136, 0);
+    color: #ffffff;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.review-image-thumb:hover .review-image-overlay {
+    background: rgba(13, 148, 136, 0.7);
+    opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   IMAGE LIGHTBOX
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.image-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-lightbox.show {
+    opacity: 1;
+}
+
+.lightbox-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(8px);
+}
+
+.lightbox-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    animation: lightboxZoom 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes lightboxZoom {
+    from {
+        opacity: 0;
+        transform: scale(0.85);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.image-lightbox:not(.show) .lightbox-content {
+    animation: lightboxZoomOut 0.3s ease forwards;
+}
+
+@keyframes lightboxZoomOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.85);
+    }
+}
+
+.lightbox-content img {
+    max-width: 90vw;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 0.75rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: -1rem;
+    right: -1rem;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    color: #1c1917;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.lightbox-close:hover {
+    background: #ef4444;
+    color: #ffffff;
+    transform: scale(1.1) rotate(90deg);
+}
+
+/* Responsive for upload section */
+@media (max-width: 576px) {
+    .upload-row {
+        gap: 0.5rem;
+    }
+
+    .upload-dropzone-mini {
+        padding: 0.4rem 0.75rem;
+    }
+
+    .upload-text {
+        font-size: 0.8rem;
+    }
+
+    .upload-hint {
+        display: none;
+    }
+
+    .image-preview-inline {
+        gap: 0.75rem;
+    }
+
+    .preview-thumb {
+        width: 140px;
+        height: 140px;
+    }
+
+    .preview-thumb .thumb-delete {
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+    }
+
+    .preview-thumb.uploading::before {
+        width: 32px;
+        height: 32px;
+        margin: -16px 0 0 -16px;
+    }
+
+    .preview-thumb.uploaded::after {
+        width: 26px;
+        height: 26px;
+        font-size: 14px;
+    }
+
+    .review-image-thumb {
+        width: 160px;
+        height: 160px;
+    }
+
+    .lightbox-content img {
+        max-width: 95vw;
+        border-radius: 0.5rem;
+    }
+
+    .lightbox-close {
+        top: -0.75rem;
+        right: -0.75rem;
+        width: 36px;
+        height: 36px;
+    }
 }
 </style>
 </body>

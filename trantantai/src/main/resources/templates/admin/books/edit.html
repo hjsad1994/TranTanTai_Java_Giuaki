@@ -121,6 +121,37 @@
                             </div>
                         </div>
 
+                        <!-- Image Upload Section -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+                                    <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1z"/>
+                                </svg>
+                                Hình ảnh sách (tối đa 3 ảnh)
+                            </label>
+                            <div class="image-preview-grid" id="imagePreviewGrid">
+                                <!-- Existing images will be rendered here -->
+                            </div>
+                            <div class="image-upload-zone" id="uploadZone">
+                                <input type="file" id="imageInput" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden>
+                                <div class="upload-content">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                        <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>
+                                    </svg>
+                                    <p class="upload-text">Thêm ảnh mới - Kéo thả hoặc <span>chọn từ máy tính</span></p>
+                                    <p class="upload-hint">JPEG, PNG, GIF, WebP - Tối đa 5MB mỗi ảnh</p>
+                                </div>
+                                <div class="upload-loading" style="display: none;">
+                                    <div class="spinner"></div>
+                                    <span>Đang tải lên...</span>
+                                </div>
+                            </div>
+                            <!-- Hidden inputs for form binding -->
+                            <div id="hiddenImageInputs"></div>
+                        </div>
+
                         <div class="form-actions">
                             <button type="submit" class="btn-admin btn-admin-primary">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
@@ -204,6 +235,294 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Image Upload Zone */
+.image-upload-zone {
+    border: 2px dashed var(--admin-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-xl);
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    background: var(--admin-surface-hover);
+    position: relative;
+    margin-top: var(--space-md);
+}
+
+.image-upload-zone:hover,
+.image-upload-zone.dragover {
+    border-color: var(--admin-accent);
+    background: var(--admin-accent-muted);
+}
+
+.image-upload-zone.uploading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.upload-content svg {
+    color: var(--admin-text-muted);
+    margin-bottom: var(--space-md);
+}
+
+.upload-text {
+    color: var(--admin-text-secondary);
+    margin: 0 0 var(--space-xs);
+    font-weight: 500;
+}
+
+.upload-text span {
+    color: var(--admin-accent);
+    font-weight: 600;
+}
+
+.upload-hint {
+    color: var(--admin-text-muted);
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+.upload-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.9);
+    border-radius: var(--radius-md);
+    gap: var(--space-sm);
+}
+
+.upload-loading .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--admin-border);
+    border-top-color: var(--admin-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Image Preview Grid */
+.image-preview-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.image-preview-item {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 2px solid var(--admin-border);
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-preview-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    background: var(--admin-danger);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: var(--transition-fast);
+}
+
+.image-preview-item:hover .image-preview-remove {
+    opacity: 1;
+}
+
+.image-preview-remove:hover {
+    background: #b91c1c;
+    transform: scale(1.1);
+}
+
+.image-preview-badge {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    padding: 2px 8px;
+    background: var(--admin-accent);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: var(--radius-full);
+}
 </style>
+
+<script th:inline="javascript">
+document.addEventListener('DOMContentLoaded', function() {
+    const MAX_IMAGES = 3;
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    
+    const csrfToken = /*[[${_csrf.token}]]*/ '';
+    const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+    
+    // Get existing images from the book
+    const existingImageUrls = /*[[${book.imageUrls}]]*/ [];
+    
+    const uploadZone = document.getElementById('uploadZone');
+    const imageInput = document.getElementById('imageInput');
+    const previewGrid = document.getElementById('imagePreviewGrid');
+    const hiddenInputs = document.getElementById('hiddenImageInputs');
+    const uploadContent = uploadZone.querySelector('.upload-content');
+    const uploadLoading = uploadZone.querySelector('.upload-loading');
+    
+    // Initialize with existing images
+    let uploadedImages = existingImageUrls ? existingImageUrls.map(url => ({ url: url, publicId: null })) : [];
+    
+    // Initial render
+    renderPreviews();
+    updateHiddenInputs();
+    updateUploadZoneVisibility();
+    
+    // Click to open file dialog
+    uploadZone.addEventListener('click', () => {
+        if (uploadedImages.length < MAX_IMAGES) {
+            imageInput.click();
+        }
+    });
+    
+    // Drag and drop events
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+    
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+    
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        const files = Array.from(e.dataTransfer.files).filter(f => ALLOWED_TYPES.includes(f.type));
+        handleFiles(files);
+    });
+    
+    // File input change
+    imageInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        handleFiles(files);
+        imageInput.value = ''; // Reset for next selection
+    });
+    
+    async function handleFiles(files) {
+        const remaining = MAX_IMAGES - uploadedImages.length;
+        const toUpload = files.slice(0, remaining);
+        
+        for (const file of toUpload) {
+            if (file.size > MAX_FILE_SIZE) {
+                alert(`Ảnh "${file.name}" vượt quá 5MB`);
+                continue;
+            }
+            await uploadFile(file);
+        }
+    }
+    
+    async function uploadFile(file) {
+        uploadZone.classList.add('uploading');
+        uploadContent.style.display = 'none';
+        uploadLoading.style.display = 'flex';
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            const response = await fetch('/api/v1/images/books', {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                },
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Upload failed');
+            }
+            
+            const data = await response.json();
+            uploadedImages.push({ url: data.url, publicId: data.publicId });
+            renderPreviews();
+            updateHiddenInputs();
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Lỗi tải ảnh: ' + error.message);
+        } finally {
+            uploadZone.classList.remove('uploading');
+            uploadContent.style.display = 'block';
+            uploadLoading.style.display = 'none';
+            updateUploadZoneVisibility();
+        }
+    }
+    
+    function renderPreviews() {
+        previewGrid.innerHTML = '';
+        uploadedImages.forEach((img, index) => {
+            const item = document.createElement('div');
+            item.className = 'image-preview-item';
+            item.innerHTML = `
+                <img src="${img.url}" alt="Preview ${index + 1}">
+                <button type="button" class="image-preview-remove" onclick="removeImage(${index})">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                    </svg>
+                </button>
+                ${index === 0 ? '<span class="image-preview-badge">Chính</span>' : ''}
+            `;
+            previewGrid.appendChild(item);
+        });
+    }
+    
+    function updateHiddenInputs() {
+        hiddenInputs.innerHTML = '';
+        uploadedImages.forEach((img, index) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = `imageUrls[${index}]`;
+            input.value = img.url;
+            hiddenInputs.appendChild(input);
+        });
+    }
+    
+    function updateUploadZoneVisibility() {
+        if (uploadedImages.length >= MAX_IMAGES) {
+            uploadZone.style.display = 'none';
+        } else {
+            uploadZone.style.display = 'block';
+        }
+    }
+    
+    // Global function for remove button
+    window.removeImage = function(index) {
+        uploadedImages.splice(index, 1);
+        renderPreviews();
+        updateHiddenInputs();
+        updateUploadZoneVisibility();
+    };
+});
+</script>
 </body>
 </html>

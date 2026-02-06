@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thể Loại Sách - BookHaven</title>
+    <th:block th:replace="~{layout::link-css}"></th:block>
+    <th:block th:replace="~{layout::custom-css}"></th:block>
+    <style>
+        /* ═══════════════════════════════════════════════════════════════════════════
+           CATEGORIES SHOWCASE - Premium Visual Design
+           ═══════════════════════════════════════════════════════════════════════════ */
+
+        .categories-hero {
+            background: linear-gradient(135deg, var(--ink) 0%, var(--charcoal) 50%, #1a1a2e 100%);
+            border-radius: 28px;
+            padding: 4rem 3rem;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+            color: var(--white);
+        }
+
+        .categories-hero::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(13, 148, 136, 0.4) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .categories-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -150px;
+            left: -100px;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.3) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+
+        .categories-hero-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .categories-hero-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(13, 148, 136, 0.2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .categories-hero-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--teal-light);
+        }
+
+        .categories-hero h1 {
+            font-family: var(--font-heading);
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 0 0 1rem;
+            background: linear-gradient(135deg, var(--white) 0%, rgba(255,255,255,0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .categories-hero p {
+            font-size: 1.15rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0 0 2rem;
+            line-height: 1.7;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 2rem;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-number {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--teal-light);
+            line-height: 1;
+        }
+
+        .hero-stat-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.5rem;
+        }
+
+        /* Categories Grid */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .category-card {
+            background: var(--white);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--mist);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            text-decoration: none;
+            display: block;
+        }
+
+        .category-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+        }
+
+        .category-card-header {
+            height: 140px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Different gradient colors for variety */
+        .category-card:nth-child(6n+1) .category-card-header {
+            background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+        }
+        .category-card:nth-child(6n+2) .category-card-header {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        }
+        .category-card:nth-child(6n+3) .category-card-header {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        }
+        .category-card:nth-child(6n+4) .category-card-header {
+            background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+        }
+        .category-card:nth-child(6n+5) .category-card-header {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+        .category-card:nth-child(6n+6) .category-card-header {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
+
+        .category-card-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='25' cy='25' r='20'/%3E%3Ccircle cx='75' cy='75' r='15'/%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .category-card-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .category-card:hover .category-card-icon {
+            transform: translate(-50%, -50%) scale(1.1);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .category-card-icon svg {
+            width: 32px;
+            height: 32px;
+            color: var(--white);
+        }
+
+        .category-card-body {
+            padding: 1.5rem;
+        }
+
+        .category-card-name {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin: 0 0 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .category-card:hover .category-card-name {
+            color: var(--teal);
+        }
+
+        .category-card-stats {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .category-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            color: var(--slate);
+        }
+
+        .category-stat svg {
+            width: 16px;
+            height: 16px;
+            color: var(--teal);
+        }
+
+        .category-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--mist);
+        }
+
+        .btn-explore {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            background: var(--teal-muted);
+            color: var(--teal-dark);
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-explore:hover {
+            background: var(--teal);
+            color: var(--white);
+        }
+
+        .btn-explore svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-explore:hover svg {
+            transform: translateX(4px);
+        }
+
+        /* Admin Actions */
+        .admin-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 2;
+        }
+
+        .admin-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .admin-btn.edit {
+            background: rgba(245, 158, 11, 0.9);
+            color: var(--white);
+        }
+
+        .admin-btn.edit:hover {
+            background: var(--amber);
+            transform: scale(1.1);
+        }
+
+        .admin-btn.delete {
+            background: rgba(220, 38, 38, 0.9);
+            color: var(--white);
+        }
+
+        .admin-btn.delete:hover {
+            background: var(--danger);
+            transform: scale(1.1);
+        }
+
+        .admin-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Add Category Button */
+        .add-category-card {
+            background: var(--snow);
+            border: 2px dashed var(--mist);
+            border-radius: 20px;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .add-category-card:hover {
+            border-color: var(--teal);
+            background: var(--teal-soft);
+        }
+
+        .add-category-icon {
+            width: 70px;
+            height: 70px;
+            background: var(--white);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .add-category-card:hover .add-category-icon {
+            background: var(--teal);
+        }
+
+        .add-category-icon svg {
+            width: 32px;
+            height: 32px;
+            color: var(--teal);
+            transition: color 0.3s ease;
+        }
+
+        .add-category-card:hover .add-category-icon svg {
+            color: var(--white);
+        }
+
+        .add-category-text {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--graphite);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--snow);
+            border-radius: 24px;
+            border: 2px dashed var(--mist);
+        }
+
+        .empty-state-icon {
+            width: 100px;
+            height: 100px;
+            background: var(--white);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .empty-state-icon svg {
+            width: 48px;
+            height: 48px;
+            color: var(--pebble);
+        }
+
+        .empty-state h3 {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: var(--slate);
+            margin-bottom: 1.5rem;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-add-first {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            background: var(--teal);
+            color: var(--white);
+            font-weight: 600;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add-first:hover {
+            background: var(--teal-dark);
+            transform: translateY(-2px);
+            color: var(--white);
+        }
+
+        /* Browse Books CTA */
+        .browse-books-cta {
+            background: linear-gradient(135deg, var(--teal-soft) 0%, var(--cloud) 50%, rgba(249, 115, 22, 0.05) 100%);
+            border-radius: 24px;
+            padding: 3rem;
+            margin-top: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .browse-books-cta::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--teal-muted) 0%, transparent 70%);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .browse-books-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .browse-books-content h3 {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin: 0 0 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .browse-books-content h3 svg {
+            color: var(--teal);
+        }
+
+        .browse-books-content p {
+            color: var(--slate);
+            margin: 0;
+        }
+
+        .btn-browse {
+            position: relative;
+            z-index: 1;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            background: var(--teal);
+            color: var(--white);
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-browse:hover {
+            background: var(--teal-dark);
+            transform: translateX(4px);
+            color: var(--white);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .categories-hero {
+                padding: 2.5rem 1.5rem;
+            }
+
+            .categories-hero h1 {
+                font-size: 2rem;
+            }
+
+            .categories-hero p {
+                font-size: 1rem;
+            }
+
+            .hero-stats {
+                gap: 2rem;
+            }
+
+            .hero-stat-number {
+                font-size: 2rem;
+            }
+
+            .categories-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .browse-books-cta {
+                padding: 2rem;
+                text-align: center;
+                flex-direction: column;
+            }
+
+            .browse-books-content {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+<th:block th:replace="~{layout::header}"></th:block>
+
+<main class="flex-grow-1">
+    <div class="container animate-fade-in">
+        <!-- Hero Section -->
+        <div class="categories-hero">
+            <div class="hero-pattern"></div>
+            <div class="categories-hero-content">
+                <div class="categories-hero-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M3 2v4.586l7 7L14.586 9l-7-7zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586z"/>
+                        <path d="M5.5 5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+                    </svg>
+                </div>
+                <h1>Thể Loại Sách</h1>
+                <p>Khám phá kho tàng tri thức qua các thể loại sách đa dạng. Từ văn học cổ điển đến khoa học hiện đại, tìm đúng sách bạn cần.</p>
+
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-number" th:text="${#lists.size(categories)}">0</div>
+                        <div class="hero-stat-label">Thể Loại</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-number" th:text="${totalBooks != null ? totalBooks : '1000+'}">1000+</div>
+                        <div class="hero-stat-label">Đầu Sách</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Grid -->
+        <div class="categories-grid stagger-animation" th:if="${categories != null && !#lists.isEmpty(categories)}">
+            <div class="category-card" th:each="category : ${categories}">
+                <!-- Admin Actions -->
+                <div class="admin-badge" sec:authorize="hasRole('ADMIN')">
+                    <a th:href="@{/categories/edit/{id}(id=${category.id})}" class="admin-btn edit" title="Chỉnh sửa">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207z"/>
+                        </svg>
+                    </a>
+                    <a th:href="@{/categories/delete/{id}(id=${category.id})}"
+                       class="admin-btn delete delete-category-btn"
+                       th:data-book-count="${bookCountMap[category.id]}"
+                       th:data-category-name="${category.name}"
+                       title="Xóa">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                        </svg>
+                    </a>
+                </div>
+
+                <!-- Card Header with Icon -->
+                <div class="category-card-header">
+                    <div class="category-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Card Body -->
+                <div class="category-card-body">
+                    <h3 class="category-card-name" th:text="${category.name}">Tên Danh Mục</h3>
+
+                    <div class="category-card-stats">
+                        <div class="category-stat">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z"/>
+                            </svg>
+                            <span th:text="${bookCountMap[category.id]} + ' sách'">0 sách</span>
+                        </div>
+                    </div>
+
+                    <div class="category-card-footer">
+                        <a th:href="@{/books(category=${category.id})}" class="btn-explore">
+                            Khám Phá
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add New Category Card (Admin Only) -->
+            <a href="/categories/add" class="add-category-card" sec:authorize="hasRole('ADMIN')">
+                <div class="add-category-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                    </svg>
+                </div>
+                <span class="add-category-text">Thêm Thể Loại Mới</span>
+            </a>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" th:if="${categories == null || #lists.isEmpty(categories)}">
+            <div class="empty-state-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M4.98 4a.5.5 0 0 0-.39.188L1.54 8H6a.5.5 0 0 1 .5.5 1.5 1.5 0 1 0 3 0A.5.5 0 0 1 10 8h4.46l-3.05-3.812A.5.5 0 0 0 11.02 4zm9.954 5H10.45a2.5 2.5 0 0 1-4.9 0H1.066l.32 2.562a.5.5 0 0 0 .497.438h12.234a.5.5 0 0 0 .496-.438zM3.809 3.563A1.5 1.5 0 0 1 4.981 3h6.038a1.5 1.5 0 0 1 1.172.563l3.7 4.625a.5.5 0 0 1 .105.374l-.39 3.124A1.5 1.5 0 0 1 14.117 13H1.883a1.5 1.5 0 0 1-1.489-1.314l-.39-3.124a.5.5 0 0 1 .106-.374z"/>
+                </svg>
+            </div>
+            <h3>Chưa có thể loại nào</h3>
+            <p>Hãy thêm thể loại đầu tiên để bắt đầu phân loại sách trong kho.</p>
+            <a href="/categories/add" class="btn-add-first" sec:authorize="hasRole('ADMIN')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                </svg>
+                Thêm Thể Loại Đầu Tiên
+            </a>
+        </div>
+
+        <!-- Browse Books CTA -->
+        <div class="browse-books-cta">
+            <div class="browse-books-content">
+                <h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783"/>
+                    </svg>
+                    Xem Tất Cả Sách
+                </h3>
+                <p>Khám phá toàn bộ kho sách với hàng ngàn đầu sách hay</p>
+            </div>
+            <a href="/books" class="btn-browse">
+                Duyệt Kho Sách
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{layout::footer}"></th:block>
+
+<script>
+    // Delete category confirmation with book count warning
+    document.querySelectorAll('.delete-category-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const bookCount = parseInt(this.dataset.bookCount) || 0;
+            const categoryName = this.dataset.categoryName;
+            const href = this.getAttribute('href');
+
+            let message;
+            if (bookCount > 0) {
+                message = `CẢNH BÁO: Bạn có chắc muốn xóa thể loại "${categoryName}"?\n\n` +
+                          `Hành động này sẽ XÓA VĨNH VIỄN ${bookCount} sách trong thể loại này!\n\n` +
+                          `Thao tác này KHÔNG THỂ HOÀN TÁC.`;
+            } else {
+                message = `Bạn có chắc muốn xóa thể loại "${categoryName}"?`;
+            }
+
+            if (confirm(message)) {
+                window.location.href = href;
+            }
+        });
+    });
+</script>
+</body>
+</html>

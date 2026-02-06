@@ -145,3 +145,16 @@ Test file created following Spring Boot 3.x/standard conventions:
 5. `updateCategory_existingId_returnsUpdated()` - Verifies PUT updates category and returns 200
 6. `deleteCategory_noBooks_returns204()` - Verifies DELETE returns 204 when no books exist
 7. `deleteCategory_hasBooks_returns409()` - Verifies DELETE returns 409 Conflict when books exist
+
+## API Demo Implementation in list.html
+- Added "API Demo" section below the book list table.
+- Implemented JavaScript functions using `fetch` API:
+  - `loadBooks()`: GET `/api/v1/books`
+  - `getFirstBook()`: Chained GET `/api/v1/books` (to find ID) -> GET `/api/v1/books/{id}`
+  - `createTestBook()`: POST `/api/v1/books` with JSON body
+- **CSRF Handling**: 
+  - Added hidden div: `<div id="csrf-data" th:attr="data-csrf=${_csrf.token}">`
+  - JS extracts token: `document.getElementById('csrf-data').getAttribute('data-csrf')`
+  - Passed in header: `'X-CSRF-TOKEN': token`
+- **Styling**: Used Bootstrap classes (`container`, `card`, `btn`, `alert-like` pre tag) to match existing theme.
+- **Safety**: Wrapped `fetch` calls in try/catch blocks and displayed errors in the UI.
