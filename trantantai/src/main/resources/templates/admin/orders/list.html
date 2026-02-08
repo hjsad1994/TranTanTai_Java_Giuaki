@@ -645,9 +645,15 @@
                             </svg>
                             <input type="text" placeholder="Tìm mã đơn..." id="searchInput">
                         </div>
-                        <select class="table-filter" id="statusFilter">
+                        <select class="table-filter" id="sortFilter" onchange="applySortFilter()">
+                            <option value="invoiceDate-desc" th:selected="${currentSortBy == 'invoiceDate' and currentSortDir == 'desc'}">Mới nhất</option>
+                            <option value="invoiceDate-asc" th:selected="${currentSortBy == 'invoiceDate' and currentSortDir == 'asc'}">Cũ nhất</option>
+                            <option value="price-desc" th:selected="${currentSortBy == 'price' and currentSortDir == 'desc'}">Giá cao → thấp</option>
+                            <option value="price-asc" th:selected="${currentSortBy == 'price' and currentSortDir == 'asc'}">Giá thấp → cao</option>
+                        </select>
+                        <select class="table-filter" id="statusFilter" onchange="applySortFilter()">
                             <option value="">Tất cả trạng thái</option>
-                            <option th:each="status : ${orderStatuses}" th:value="${status}" th:text="${status.displayName}"></option>
+                            <option th:each="st : ${orderStatuses}" th:value="${st}" th:text="${st.displayName}" th:selected="${currentStatus == st.name()}"></option>
                         </select>
                     </div>
                 </div>
@@ -787,17 +793,17 @@
                     <nav class="pagination-nav">
                         <ul class="pagination">
                             <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                                <a class="page-link" th:href="@{/admin/orders(pageNo=${currentPage - 1})}">
+                                <a class="page-link" th:href="@{/admin/orders(pageNo=${currentPage - 1}, sortBy=${currentSortBy}, sortDir=${currentSortDir}, status=${currentStatus})}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                         <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
                                     </svg>
                                 </a>
                             </li>
                             <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages)}" th:classappend="${currentPage == i} ? 'active'">
-                                <a class="page-link" th:href="@{/admin/orders(pageNo=${i})}" th:text="${i + 1}">1</a>
+                                <a class="page-link" th:href="@{/admin/orders(pageNo=${i}, sortBy=${currentSortBy}, sortDir=${currentSortDir}, status=${currentStatus})}" th:text="${i + 1}">1</a>
                             </li>
                             <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
-                                <a class="page-link" th:href="@{/admin/orders(pageNo=${currentPage + 1})}">
+                                <a class="page-link" th:href="@{/admin/orders(pageNo=${currentPage + 1}, sortBy=${currentSortBy}, sortDir=${currentSortDir}, status=${currentStatus})}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                         <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
                                     </svg>
@@ -856,7 +862,22 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/js/admin.js}"></script>
 <script>
-    // Search Order ID
+    // Apply sort and filter - redirect to server
+    function applySortFilter() {
+        const sortValue = document.getElementById('sortFilter').value;
+        const statusValue = document.getElementById('statusFilter').value;
+
+        const [sortBy, sortDir] = sortValue.split('-');
+
+        let url = '/admin/orders?pageNo=0&sortBy=' + sortBy + '&sortDir=' + sortDir;
+        if (statusValue) {
+            url += '&status=' + statusValue;
+        }
+
+        window.location.href = url;
+    }
+
+    // Search Order ID (client-side for quick filtering)
     document.getElementById('searchInput')?.addEventListener('input', function(e) {
         const searchTerm = e.target.value.toLowerCase();
         const rows = document.querySelectorAll('#ordersTable tbody tr');
@@ -866,20 +887,6 @@
             if(orderIdCell) {
                 const text = orderIdCell.textContent.toLowerCase();
                 row.style.display = text.includes(searchTerm) ? '' : 'none';
-            }
-        });
-    });
-
-    // Status Filter
-    document.getElementById('statusFilter')?.addEventListener('change', function(e) {
-        const status = e.target.value;
-        const rows = document.querySelectorAll('#ordersTable tbody tr');
-
-        rows.forEach(row => {
-            if (!status || row.dataset.status === status) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
             }
         });
     });

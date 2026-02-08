@@ -5,11 +5,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Component;
 import trantantai.trantantai.entities.User;
+import trantantai.trantantai.repositories.IUserRepository;
 import trantantai.trantantai.services.CartService;
 
 import java.io.IOException;
@@ -25,11 +27,13 @@ public class CustomAuthSuccessHandler implements AuthenticationSuccessHandler {
     private static final Logger logger = Logger.getLogger(CustomAuthSuccessHandler.class.getName());
 
     private final CartService cartService;
+    private final IUserRepository userRepository;
     private final HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
 
     @Autowired
-    public CustomAuthSuccessHandler(CartService cartService) {
+    public CustomAuthSuccessHandler(CartService cartService, IUserRepository userRepository) {
         this.cartService = cartService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -87,6 +91,16 @@ public class CustomAuthSuccessHandler implements AuthenticationSuccessHandler {
         
         if (principal instanceof User) {
             return ((User) principal).getId();
+        }
+        
+        if (principal instanceof OAuth2User) {
+            OAuth2User oauth2User = (OAuth2User) principal;
+            String email = oauth2User.getAttribute("email");
+            if (email != null) {
+                return userRepository.findByEmail(email)
+                        .map(User::getId)
+                        .orElse(null);
+            }
         }
         
         if (principal instanceof org.springframework.security.core.userdetails.User) {

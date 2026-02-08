@@ -14,12 +14,15 @@ import trantantai.trantantai.entities.RoleEntity;
 import trantantai.trantantai.constants.Role;
 
 import java.util.Set;
+import java.util.logging.Logger;
 
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class UserService implements UserDetailsService {
+
+    private static final Logger logger = Logger.getLogger(UserService.class.getName());
 
     private final IUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -34,8 +37,14 @@ public class UserService implements UserDetailsService {
 
     public void setDefaultRole(User user) {
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
-            roleRepository.findByName(Role.USER.name())
-                    .ifPresent(role -> user.setRoles(Set.of(role)));
+            Optional<RoleEntity> roleOpt = roleRepository.findByName(Role.USER.name());
+            if (roleOpt.isPresent()) {
+                user.setRoles(Set.of(roleOpt.get()));
+                logger.info("Set default role USER for user: " + user.getEmail());
+            } else {
+                logger.severe("CRITICAL: Role 'USER' not found in database! " +
+                        "Please ensure roles are initialized in the database.");
+            }
         }
     }
 
@@ -67,25 +76,54 @@ public class UserService implements UserDetailsService {
      * @param email User's email from OAuth provider
      * @param username Suggested username (from email prefix)
      * @param provider OAuth provider (GOOGLE)
-     * @return Saved or existing user
+     * @return Saved or existing user with roles properly loaded
      */
     public User saveOauthUser(String email, String username, Provider provider) {
         // Check if user already exists with this email
         Optional<User> existingUser = userRepository.findByEmail(email);
-        
+
         if (existingUser.isPresent()) {
-            // Link existing account - return existing user (they can use both methods)
-            return existingUser.get();
+            User user = existingUser.get();
+            logger.info("Found existing OAuth user: " + email + ", roles: " +
+                    (user.getRoles() != null ? user.getRoles().size() : "null"));
+
+            // Always ensure user has USER role (for legacy users without roles)
+            if (user.getRoles() == null || user.getRoles().isEmpty()) {
+                logger.info("Setting default role for existing OAuth user: " + email);
+                setDefaultRole(user);
+                user = userRepository.save(user);
+            }
+
+            // Re-fetch to ensure DBRef roles are properly loaded
+            User reloadedUser = userRepository.findById(user.getId()).orElse(user);
+            logger.info("Reloaded OAuth user: " + email + ", roles: " +
+                    (reloadedUser.getRoles() != null ? reloadedUser.getRoles().size() : "null"));
+
+            if (reloadedUser.getRoles() != null) {
+                reloadedUser.getRoles().forEach(role ->
+                    logger.info("OAuth user " + email + " has role: " + role.getName())
+                );
+            }
+
+            return reloadedUser;
         }
-        
+
         // Create new OAuth user
+        logger.info("Creating new OAuth user: " + email);
         User newUser = new User();
         newUser.setEmail(email);
         newUser.setUsername(generateUniqueUsername(username));
         newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString())); // Placeholder password for OAuth users
         newUser.setProvider(provider);
         setDefaultRole(newUser);
-        return userRepository.save(newUser);
+        User savedUser = userRepository.save(newUser);
+
+        // Re-fetch to ensure DBRef roles are properly loaded
+        User reloadedUser = userRepository.findById(savedUser.getId()).orElse(savedUser);
+        logger.info("Created new OAuth user: " + email + ", roles: " +
+                (reloadedUser.getRoles() != null ? reloadedUser.getRoles().size() : "null"));
+
+        return reloadedUser;
     }
     
     /**

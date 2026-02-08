@@ -8,24 +8,24 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.stereotype.Component;
 import trantantai.trantantai.entities.User;
+import trantantai.trantantai.repositories.IUserRepository;
 import trantantai.trantantai.services.CartService;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Custom logout handler to save cart to database before session invalidation.
- */
 @Component
 public class CustomLogoutHandler implements LogoutHandler {
 
     private static final Logger logger = Logger.getLogger(CustomLogoutHandler.class.getName());
 
     private final CartService cartService;
+    private final IUserRepository userRepository;
 
     @Autowired
-    public CustomLogoutHandler(CartService cartService) {
+    public CustomLogoutHandler(CartService cartService, IUserRepository userRepository) {
         this.cartService = cartService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -55,11 +55,12 @@ public class CustomLogoutHandler implements LogoutHandler {
         }
         
         if (principal instanceof OAuth2User) {
-            // For OAuth2 users, try to get user ID from attributes
             OAuth2User oauth2User = (OAuth2User) principal;
-            Object email = oauth2User.getAttribute("email");
+            String email = oauth2User.getAttribute("email");
             if (email != null) {
-                return email.toString(); // Use email as identifier for OAuth users
+                return userRepository.findByEmail(email)
+                        .map(User::getId)
+                        .orElse(null);
             }
         }
         

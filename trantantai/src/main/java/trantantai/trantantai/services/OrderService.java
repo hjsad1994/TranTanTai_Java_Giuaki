@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import trantantai.trantantai.constants.OrderStatus;
 import trantantai.trantantai.entities.Book;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -33,23 +35,52 @@ public class OrderService {
 
     /**
      * Get all orders for a specific user, sorted by date descending.
-     * Populates book details in each ItemInvoice.
+     * Populates book details in each ItemInvoice (batch optimized).
      */
     public List<Invoice> getOrdersByUserId(String userId) {
         List<Invoice> orders = invoiceRepository.findByUserIdOrderByInvoiceDateDesc(userId);
-        orders.forEach(this::populateBookDetails);
+        populateBookDetailsForList(orders);
         return orders;
     }
 
     /**
-     * Get all orders with pagination (for admin).
+     * Get all orders with pagination and sorting (for admin).
+     * Populates book details in each ItemInvoice (batch optimized).
+     *
+     * @param page Page number (0-based)
+     * @param size Page size
+     * @param sortBy Sort field (invoiceDate, price)
+     * @param sortDir Sort direction (asc, desc)
+     * @param status Optional status filter
+     */
+    public Page<Invoice> getAllOrders(int page, int size, String sortBy, String sortDir, OrderStatus status) {
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sort = Sort.by(direction, sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        logger.info("=== Fetching orders ===");
+        logger.info("Page: " + page + ", Size: " + size + ", SortBy: " + sortBy + ", SortDir: " + sortDir + ", Status: " + status);
+
+        Page<Invoice> orders;
+        if (status != null) {
+            orders = invoiceRepository.findByOrderStatus(status, pageable);
+        } else {
+            orders = invoiceRepository.findAll(pageable);
+        }
+
+        logger.info("Found " + orders.getTotalElements() + " total orders, " + orders.getContent().size() + " on this page");
+
+        // Batch populate book details
+        populateBookDetailsForList(orders.getContent());
+        return orders;
+    }
+
+    /**
+     * Get all orders with pagination (for admin) - default sorted by newest first.
      * Populates book details in each ItemInvoice.
      */
     public Page<Invoice> getAllOrders(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Invoice> orders = invoiceRepository.findAllByOrderByInvoiceDateDesc(pageable);
-        orders.forEach(this::populateBookDetails);
-        return orders;
+        return getAllOrders(page, size, "invoiceDate", "desc", null);
     }
 
     /**
@@ -113,27 +144,89 @@ public class OrderService {
      */
     public Map<String, Long> getOrderStatistics() {
         Map<String, Long> stats = new HashMap<>();
-        
-        stats.put("total", invoiceRepository.count());
-        stats.put("processing", invoiceRepository.countByOrderStatus(OrderStatus.PROCESSING));
-        stats.put("shipped", invoiceRepository.countByOrderStatus(OrderStatus.SHIPPED));
-        stats.put("delivered", invoiceRepository.countByOrderStatus(OrderStatus.DELIVERED));
-        stats.put("cancelled", invoiceRepository.countByOrderStatus(OrderStatus.CANCELLED));
-        
+
+        long total = invoiceRepository.count();
+        long processing = invoiceRepository.countByOrderStatus(OrderStatus.PROCESSING);
+        long shipped = invoiceRepository.countByOrderStatus(OrderStatus.SHIPPED);
+        long delivered = invoiceRepository.countByOrderStatus(OrderStatus.DELIVERED);
+        long cancelled = invoiceRepository.countByOrderStatus(OrderStatus.CANCELLED);
+
+        logger.info("=== Order Statistics ===");
+        logger.info("Total: " + total);
+        logger.info("Processing: " + processing);
+        logger.info("Shipped: " + shipped);
+        logger.info("Delivered: " + delivered);
+        logger.info("Cancelled: " + cancelled);
+
+        stats.put("total", total);
+        stats.put("processing", processing);
+        stats.put("shipped", shipped);
+        stats.put("delivered", delivered);
+        stats.put("cancelled", cancelled);
+
         return stats;
     }
 
     /**
      * Populate book details in ItemInvoice @Transient field.
+     * Optimized: fetches all books in one query.
      */
     private void populateBookDetails(Invoice invoice) {
-        if (invoice == null || invoice.getItemInvoices() == null) {
+        if (invoice == null || invoice.getItemInvoices() == null || invoice.getItemInvoices().isEmpty()) {
             return;
         }
-        
+
+        // Collect all book IDs
+        List<String> bookIds = invoice.getItemInvoices().stream()
+                .map(ItemInvoice::getBookId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // Fetch all books at once
+        Map<String, Book> bookMap = bookService.getBooksByIds(bookIds);
+
+        // Assign books to items
         for (ItemInvoice item : invoice.getItemInvoices()) {
-            bookService.getBookById(item.getBookId())
-                    .ifPresent(item::setBook);
+            Book book = bookMap.get(item.getBookId());
+            if (book != null) {
+                item.setBook(book);
+            }
+        }
+    }
+
+    /**
+     * Populate book details for multiple invoices (batch optimized).
+     */
+    private void populateBookDetailsForList(List<Invoice> invoices) {
+        if (invoices == null || invoices.isEmpty()) {
+            return;
+        }
+
+        // Collect all book IDs from all invoices
+        List<String> allBookIds = invoices.stream()
+                .filter(inv -> inv.getItemInvoices() != null)
+                .flatMap(inv -> inv.getItemInvoices().stream())
+                .map(ItemInvoice::getBookId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (allBookIds.isEmpty()) {
+            return;
+        }
+
+        // Fetch all books at once
+        Map<String, Book> bookMap = bookService.getBooksByIds(allBookIds);
+
+        // Assign books to items in all invoices
+        for (Invoice invoice : invoices) {
+            if (invoice.getItemInvoices() != null) {
+                for (ItemInvoice item : invoice.getItemInvoices()) {
+                    Book book = bookMap.get(item.getBookId());
+                    if (book != null) {
+                        item.setBook(book);
+                    }
+                }
+            }
         }
     }
 }

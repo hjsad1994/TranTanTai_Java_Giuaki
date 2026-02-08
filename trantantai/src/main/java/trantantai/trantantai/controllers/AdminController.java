@@ -254,10 +254,23 @@ public class AdminController {
     public String listOrders(
             @NotNull Model model,
             @RequestParam(defaultValue = "0") Integer pageNo,
-            @RequestParam(defaultValue = "20") Integer pageSize) {
+            @RequestParam(defaultValue = "20") Integer pageSize,
+            @RequestParam(defaultValue = "invoiceDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) String status) {
 
-        Page<Invoice> ordersPage = orderService.getAllOrders(pageNo, pageSize);
-        
+        // Parse status filter
+        OrderStatus orderStatus = null;
+        if (status != null && !status.isEmpty()) {
+            try {
+                orderStatus = OrderStatus.valueOf(status);
+            } catch (IllegalArgumentException ignored) {
+                // Invalid status, ignore
+            }
+        }
+
+        Page<Invoice> ordersPage = orderService.getAllOrders(pageNo, pageSize, sortBy, sortDir, orderStatus);
+
         model.addAttribute("pageTitle", "Quản lý Đơn hàng");
         model.addAttribute("activeMenu", "orders");
         model.addAttribute("orders", ordersPage.getContent());
@@ -265,7 +278,12 @@ public class AdminController {
         model.addAttribute("totalOrders", ordersPage.getTotalElements());
         model.addAttribute("totalPages", ordersPage.getTotalPages() > 0 ? ordersPage.getTotalPages() - 1 : 0);
         model.addAttribute("orderStatuses", OrderStatus.values());
-        
+
+        // Current filter/sort values for the UI
+        model.addAttribute("currentSortBy", sortBy);
+        model.addAttribute("currentSortDir", sortDir);
+        model.addAttribute("currentStatus", status);
+
         // Order statistics
         Map<String, Long> orderStats = orderService.getOrderStatistics();
         model.addAttribute("orderStats", orderStats);

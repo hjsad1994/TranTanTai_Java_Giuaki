@@ -15,6 +15,7 @@ import trantantai.trantantai.entities.Book;
 import trantantai.trantantai.entities.Category;
 import trantantai.trantantai.repositories.IBookRepository;
 import trantantai.trantantai.repositories.ICategoryRepository;
+import trantantai.trantantai.repositories.IWishlistRepository;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,12 +26,18 @@ public class BookService {
     private final IBookRepository bookRepository;
     private final ICategoryRepository categoryRepository;
     private final MongoTemplate mongoTemplate;
+    private final UserCartService userCartService;
+    private final IWishlistRepository wishlistRepository;
 
     @Autowired
-    public BookService(IBookRepository bookRepository, ICategoryRepository categoryRepository, MongoTemplate mongoTemplate) {
+    public BookService(IBookRepository bookRepository, ICategoryRepository categoryRepository,
+                       MongoTemplate mongoTemplate, UserCartService userCartService,
+                       IWishlistRepository wishlistRepository) {
         this.bookRepository = bookRepository;
         this.categoryRepository = categoryRepository;
         this.mongoTemplate = mongoTemplate;
+        this.userCartService = userCartService;
+        this.wishlistRepository = wishlistRepository;
     }
 
     public List<Book> getAllBooks(Integer pageNo, Integer pageSize, String sortBy) {
@@ -65,6 +72,29 @@ public class BookService {
         return bookOpt;
     }
 
+    /**
+     * Check if a book exists by ID (fast, no category population)
+     */
+    public boolean existsById(String id) {
+        return bookRepository.existsById(id);
+    }
+
+    /**
+     * Get multiple books by IDs at once (batch query, no category population).
+     * Returns a map of bookId -> Book for fast lookup.
+     */
+    public Map<String, Book> getBooksByIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Book> books = (List<Book>) bookRepository.findAllById(ids);
+        Map<String, Book> bookMap = new HashMap<>();
+        for (Book book : books) {
+            bookMap.put(book.getId(), book);
+        }
+        return bookMap;
+    }
+
     public void addBook(Book book) {
         bookRepository.save(book);
     }
@@ -82,6 +112,11 @@ public class BookService {
     }
 
     public void deleteBookById(String id) {
+        // Remove book from all user carts first
+        userCartService.removeBookFromAllCarts(id);
+        // Remove book from all wishlists
+        wishlistRepository.deleteByBookId(id);
+        // Then delete the book
         bookRepository.deleteById(id);
     }
 

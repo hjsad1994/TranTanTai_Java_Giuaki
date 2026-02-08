@@ -2,6 +2,7 @@ package trantantai.trantantai.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import trantantai.trantantai.entities.Invoice;
 import trantantai.trantantai.entities.User;
+import trantantai.trantantai.repositories.IUserRepository;
 import trantantai.trantantai.services.OrderService;
 
 import java.util.List;
@@ -19,10 +21,12 @@ import java.util.Optional;
 public class OrderController {
 
     private final OrderService orderService;
+    private final IUserRepository userRepository;
 
     @Autowired
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, IUserRepository userRepository) {
         this.orderService = orderService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -83,6 +87,16 @@ public class OrderController {
         
         if (principal instanceof User) {
             return ((User) principal).getId();
+        }
+        
+        if (principal instanceof OAuth2User) {
+            OAuth2User oauth2User = (OAuth2User) principal;
+            String email = oauth2User.getAttribute("email");
+            if (email != null) {
+                return userRepository.findByEmail(email)
+                        .map(User::getId)
+                        .orElse(null);
+            }
         }
         
         return null;

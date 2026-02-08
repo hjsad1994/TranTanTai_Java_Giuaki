@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import trantantai.trantantai.daos.Cart;
 import trantantai.trantantai.daos.Item;
@@ -15,8 +16,10 @@ import trantantai.trantantai.entities.User;
 import trantantai.trantantai.entities.UserCart;
 import trantantai.trantantai.repositories.IInvoiceRepository;
 import trantantai.trantantai.repositories.IUserCartRepository;
+import trantantai.trantantai.repositories.IUserRepository;
 import trantantai.trantantai.constants.PaymentStatus;
 import trantantai.trantantai.constants.PaymentMethod;
+import trantantai.trantantai.constants.OrderStatus;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,14 +37,17 @@ public class CartService {
 
     private final IInvoiceRepository invoiceRepository;
     private final IUserCartRepository userCartRepository;
+    private final IUserRepository userRepository;
     private final BookService bookService;
 
     @Autowired
     public CartService(IInvoiceRepository invoiceRepository, 
                        IUserCartRepository userCartRepository,
+                       IUserRepository userRepository,
                        BookService bookService) {
         this.invoiceRepository = invoiceRepository;
         this.userCartRepository = userCartRepository;
+        this.userRepository = userRepository;
         this.bookService = bookService;
     }
 
@@ -72,6 +78,40 @@ public class CartService {
         return getCart(session).getCartItems().stream()
                 .mapToDouble(item -> item.getPrice() * item.getQuantity())
                 .sum();
+    }
+
+    /**
+     * Validate cart items and remove any that reference deleted books.
+     * Called when displaying cart to ensure data consistency.
+     * @return number of items removed
+     */
+    public int validateAndCleanCart(@NotNull HttpSession session) {
+        Cart cart = getCart(session);
+        List<Item> items = cart.getCartItems();
+
+        if (items.isEmpty()) {
+            return 0;
+        }
+
+        int originalSize = items.size();
+
+        // Remove items where book no longer exists (use fast existsById check)
+        items.removeIf(item -> {
+            boolean exists = bookService.existsById(item.getBookId());
+            if (!exists) {
+                logger.warning("Removing cart item - book deleted: " + item.getBookId());
+                return true;
+            }
+            return false;
+        });
+
+        int removedCount = originalSize - items.size();
+        if (removedCount > 0) {
+            updateCart(session, cart);
+            logger.info("Cleaned cart: removed " + removedCount + " items (deleted books)");
+        }
+
+        return removedCount;
     }
 
     /**
@@ -112,12 +152,24 @@ public class CartService {
         } else {
             invoice.setPaymentStatus(PaymentStatus.PENDING_PAYMENT);
         }
+
+        // Explicitly set order status to PROCESSING
+        invoice.setOrderStatus(OrderStatus.PROCESSING);
         
         // Get user ID
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof User) {
-            User user = (User) auth.getPrincipal();
-            invoice.setUserId(user.getId());
+        if (auth != null) {
+            Object principal = auth.getPrincipal();
+            if (principal instanceof User) {
+                invoice.setUserId(((User) principal).getId());
+            } else if (principal instanceof OAuth2User) {
+                OAuth2User oauth2User = (OAuth2User) principal;
+                String email = oauth2User.getAttribute("email");
+                if (email != null) {
+                    userRepository.findByEmail(email)
+                            .ifPresent(user -> invoice.setUserId(user.getId()));
+                }
+            }
         }
         
         // Convert items
@@ -131,12 +183,18 @@ public class CartService {
         
         // Save and clear
         Invoice savedInvoice = invoiceRepository.save(invoice);
-        
+        logger.info("=== Invoice saved successfully ===");
+        logger.info("Invoice ID: " + savedInvoice.getId());
+        logger.info("Order Status: " + savedInvoice.getOrderStatus());
+        logger.info("Payment Status: " + savedInvoice.getPaymentStatus());
+        logger.info("Payment Method: " + savedInvoice.getPaymentMethod());
+        logger.info("Price: " + savedInvoice.getPrice());
+
         // Only clear cart for COD (MOMO clears after payment confirmed)
         if (paymentMethod == PaymentMethod.COD) {
             removeCart(session);
         }
-        
+
         return savedInvoice;
     }
     

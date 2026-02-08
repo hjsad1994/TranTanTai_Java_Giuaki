@@ -137,7 +137,7 @@
                         </div>
 
                         <div class="book-detail-actions">
-                            <form sec:authorize="hasRole('USER')" th:action="@{/books/add-to-cart}" method="post" class="d-inline add-to-cart-form">
+                            <form sec:authorize="isAuthenticated()" th:action="@{/books/add-to-cart}" method="post" class="d-inline add-to-cart-form">
                                 <input type="hidden" name="id" th:value="${book.id}">
                                 <input type="hidden" name="name" th:value="${book.title}">
                                 <input type="hidden" name="price" th:value="${book.price}">

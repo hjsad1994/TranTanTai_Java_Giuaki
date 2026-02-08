@@ -34,6 +34,11 @@ public interface IInvoiceRepository extends MongoRepository<Invoice, String> {
     Page<Invoice> findByOrderStatusOrderByInvoiceDateDesc(OrderStatus orderStatus, Pageable pageable);
 
     /**
+     * Find orders by order status with pagination and custom sort
+     */
+    Page<Invoice> findByOrderStatus(OrderStatus orderStatus, Pageable pageable);
+
+    /**
      * Check if user has an order (not cancelled) containing the specified bookId.
      * Uses @Query because Spring Data MongoDB doesn't support derived queries
      * for fields inside embedded document lists (itemInvoices.bookId).

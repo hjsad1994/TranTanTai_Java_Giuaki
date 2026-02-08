@@ -56,26 +56,26 @@ public class SecurityConfig {
 
                 // ADMIN only - Swagger UI
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/swagger-resources/**", "/v3/api-docs/**", "/v3/api-docs.yaml", "/webjars/**").hasRole("ADMIN")
-                
-                // USER only - cart operations (MUST come BEFORE /books/add/** to avoid conflict!)
-                .requestMatchers("/cart/**").hasRole("USER")
-                .requestMatchers("/books/add-to-cart").hasRole("USER")
-                
-                // USER only - order history
-                .requestMatchers("/orders/**").hasRole("USER")
-                
+
+                // All authenticated users - cart operations (MUST come BEFORE /books/add/** to avoid conflict!)
+                .requestMatchers("/cart/**").authenticated()
+                .requestMatchers("/books/add-to-cart").authenticated()
+
+                // All authenticated users - order history
+                .requestMatchers("/orders/**").authenticated()
+
                 // ADMIN only - book management
                 .requestMatchers("/books/add", "/books/add/**").hasRole("ADMIN")
                 .requestMatchers("/books/edit/**").hasRole("ADMIN")
                 .requestMatchers("/books/delete/**").hasRole("ADMIN")
-                
+
                 // ADMIN only - category management
                 .requestMatchers("/categories/**").hasRole("ADMIN")
-                
+
                 // Both roles - viewing books and API
                 .requestMatchers("/books", "/books/search").authenticated()
                 .requestMatchers("/api/**").authenticated()
-                
+
                 // Default - require authentication
                 .anyRequest().authenticated()
             )

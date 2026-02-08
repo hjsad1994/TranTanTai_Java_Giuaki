@@ -1,19 +1,25 @@
 package trantantai.trantantai.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import trantantai.trantantai.constants.Provider;
+import trantantai.trantantai.entities.User;
 
-/**
- * Custom OAuth2 User Service for processing Google OAuth2 login.
- * Extends DefaultOAuth2UserService to add custom user persistence logic.
- */
+import java.util.HashSet;
+import java.util.Set;
+import java.util.logging.Logger;
+
 @Service
 public class OAuthService extends DefaultOAuth2UserService {
+
+    private static final Logger logger = Logger.getLogger(OAuthService.class.getName());
 
     private final UserService userService;
 
@@ -22,40 +28,34 @@ public class OAuthService extends DefaultOAuth2UserService {
         this.userService = userService;
     }
 
-    /**
-     * Load user from OAuth2 provider and persist to database.
-     * This method is called after successful OAuth2 authentication.
-     * 
-     * @param userRequest The OAuth2 user request containing client registration info
-     * @return The OAuth2User object for Spring Security
-     * @throws OAuth2AuthenticationException if authentication fails
-     */
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        // Delegate to parent to load user from OAuth2 provider (Google)
         OAuth2User oauth2User = super.loadUser(userRequest);
 
-        // Extract user information from Google attributes
         String email = oauth2User.getAttribute("email");
         String name = oauth2User.getAttribute("name");
-        
-        // Generate username from email prefix
-        // Example: john.doe@gmail.com -> john.doe
         String username = extractUsernameFromEmail(email, name);
 
-        // Save or update user in database
-        // This handles both new users and account linking
-        userService.saveOauthUser(email, username, Provider.GOOGLE);
+        User dbUser = userService.saveOauthUser(email, username, Provider.GOOGLE);
 
-        // Return the OAuth2User for Spring Security
-        // Spring Security will use this for authentication context
-        return oauth2User;
+        Set<GrantedAuthority> authorities = new HashSet<>();
+        if (dbUser.getRoles() != null && !dbUser.getRoles().isEmpty()) {
+            dbUser.getRoles().forEach(role -> {
+                String authority = "ROLE_" + role.getName();
+                authorities.add(new SimpleGrantedAuthority(authority));
+                logger.info("OAuth user " + email + " granted authority: " + authority);
+            });
+        } else {
+            // Fallback: if no roles in DB, grant default USER role
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+            logger.warning("OAuth user " + email + " has no roles in DB, granting default ROLE_USER");
+        }
+
+        logger.info("OAuth user " + email + " authenticated with authorities: " + authorities);
+
+        return new DefaultOAuth2User(authorities, oauth2User.getAttributes(), "email");
     }
     
-    /**
-     * Extract username from email address.
-     * Falls back to name or generates default if email is null.
-     */
     private String extractUsernameFromEmail(String email, String name) {
         if (email != null && email.contains("@")) {
             return email.split("@")[0];

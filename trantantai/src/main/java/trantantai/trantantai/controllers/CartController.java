@@ -37,6 +37,12 @@ public class CartController {
 
     @GetMapping
     public String showCart(HttpSession session, @NotNull Model model) {
+        // Validate cart and remove items of deleted books
+        int removedCount = cartService.validateAndCleanCart(session);
+        if (removedCount > 0) {
+            model.addAttribute("warning", removedCount + " sản phẩm đã bị xóa khỏi giỏ hàng vì không còn tồn tại.");
+        }
+
         model.addAttribute("cart", cartService.getCart(session));
         model.addAttribute("totalPrice", cartService.getSumPrice(session));
         model.addAttribute("totalQuantity", cartService.getSumQuantity(session));
@@ -104,6 +110,13 @@ public class CartController {
 
     @GetMapping("/checkout")
     public String showCheckout(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        // Validate cart and remove items of deleted books
+        int removedCount = cartService.validateAndCleanCart(session);
+        if (removedCount > 0) {
+            redirectAttributes.addFlashAttribute("warning",
+                removedCount + " sản phẩm đã bị xóa khỏi giỏ hàng vì không còn tồn tại.");
+        }
+
         var cart = cartService.getCart(session);
 
         // Check if cart is empty

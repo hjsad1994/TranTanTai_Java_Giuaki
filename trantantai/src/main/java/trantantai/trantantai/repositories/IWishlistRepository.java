@@ -39,4 +39,14 @@ public interface IWishlistRepository extends MongoRepository<Wishlist, String> {
      * Count wishlist items for a user
      */
     long countByUserId(String userId);
+
+    /**
+     * Delete all wishlist entries for a specific book (when book is deleted)
+     */
+    void deleteByBookId(String bookId);
+
+    /**
+     * Count how many users have this book in their wishlist
+     */
+    long countByBookId(String bookId);
 }

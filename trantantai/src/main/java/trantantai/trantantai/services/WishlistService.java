@@ -94,4 +94,23 @@ public class WishlistService {
             return true; // Added
         }
     }
+
+    /**
+     * Remove a book from all users' wishlists (when book is deleted)
+     */
+    public void removeBookFromAllWishlists(String bookId) {
+        wishlistRepository.deleteByBookId(bookId);
+    }
+
+    /**
+     * Remove multiple books from all wishlists (when category is deleted)
+     */
+    public void removeBooksFromAllWishlists(List<String> bookIds) {
+        if (bookIds == null || bookIds.isEmpty()) {
+            return;
+        }
+        for (String bookId : bookIds) {
+            wishlistRepository.deleteByBookId(bookId);
+        }
+    }
 }

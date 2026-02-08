@@ -10,13 +10,19 @@ import java.util.Map;
  */
 @Schema(description = "Content moderation result from OpenAI API")
 public record ModerationResultVm(
-    @Schema(description = "Whether the content was flagged as harmful")
+    @Schema(description = "Whether the content was flagged as harmful", example = "false")
     boolean flagged,
     
-    @Schema(description = "Map of category names to boolean flags indicating which categories triggered")
+    @Schema(
+        description = "Map of category names to boolean flags indicating which categories triggered",
+        example = "{\"hate\": false, \"violence\": false, \"sexual\": false, \"harassment\": false}"
+    )
     Map<String, Boolean> categories,
     
-    @Schema(description = "Map of category names to confidence scores (0.0 to 1.0)")
+    @Schema(
+        description = "Map of category names to confidence scores (0.0 to 1.0)",
+        example = "{\"hate\": 0.001, \"violence\": 0.002, \"sexual\": 0.0001, \"harassment\": 0.003}"
+    )
     Map<String, Double> categoryScores
 ) {
     /**
